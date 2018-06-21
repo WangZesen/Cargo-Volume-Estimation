@@ -12,7 +12,9 @@ Todo:
 [ ] 双相机产生的两个点云合并
 
 Run:
+
 ``
 cd work
+
 sudo python main
 ``
