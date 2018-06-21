@@ -21,6 +21,7 @@ Detail: https://docs.google.com/document/d/1G0t_qg3npnhR9EYVWwBvk8fxgYTYJX08fPgj
 - [ ] 利用闪光带判断什么时候拍照
 - [ ] 单相机多张照片合并(ICP + 闪光带定位)
 - [ ] 双相机产生的两个点云合并
+- [ ] 需要一个Python的高效实时显示点云的库
 
 ## Run:
 
