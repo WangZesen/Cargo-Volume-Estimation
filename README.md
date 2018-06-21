@@ -3,11 +3,15 @@
 ## Description
 Capstone Design 
 
-Estimate Cargo Volume using Kinect under the environment of c onveyor belt
+Estimate Cargo Volume using Kinect under the environment of conveyor belt
 
-## Environment
+## Environment Setting
 
-link
+1. Opencv 3.3.0
+2. libfreenect2
+3. pylibfreenect2
+
+Detail: https://docs.google.com/document/d/1G0t_qg3npnhR9EYVWwBvk8fxgYTYJX08fPgjS-Lj6YI/edit?usp=sharing
 
 ## Todo:
 - [x] 深度图降噪
