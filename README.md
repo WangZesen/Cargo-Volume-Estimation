@@ -13,7 +13,6 @@ Todo:
 
 Run:
 
-<pre><code>
-cd work
+<pre><code>cd work
 sudo python main
 </code></pre>
