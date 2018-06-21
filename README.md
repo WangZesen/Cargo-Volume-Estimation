@@ -16,7 +16,8 @@ Detail: https://docs.google.com/document/d/1G0t_qg3npnhR9EYVWwBvk8fxgYTYJX08fPgj
 ## Todo:
 - [x] 深度图降噪
 - [x] 根据深度图生成点云
-- [x] 去除背景（效果还需调整）
+- [x] 去除背景（效果可能还需调整）
+- [ ] 判断闪光带位置
 - [ ] 利用闪光带判断什么时候拍照
 - [ ] 单相机多张照片合并(ICP + 闪光带定位)
 - [ ] 双相机产生的两个点云合并
