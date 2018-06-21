@@ -14,5 +14,5 @@ Todo:
 Run:
 
 <pre><code>cd work
-sudo python main
+sudo python main.py
 </code></pre>
