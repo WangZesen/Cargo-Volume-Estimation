@@ -6,14 +6,20 @@ from matplotlib.ticker import LinearLocator, FormatStrFormatter
 from mpl_toolkits.mplot3d import Axes3D
 from sklearn.metrics.pairwise import paired_distances
 import rmsd
+from itertools import product, combinations
 
 # Constants
-N = 5000                                    # number of random points in the dataset
+N = 2000                                    # number of random points in the dataset
 num_tests = 10                             # number of test iterations
 dim = 3                                     # number of dimensions of the points
-noise_sigma = .01                           # standard deviation error to be added
-translation = 1                            # max translation of the test set
-rotation = np.pi / 3                         # max rotation (radians) of the test set
+noise_sigma = .05                           # standard deviation error to be added
+translation = 5                            # max translation of the test set
+rotation = np.pi / 6                         # max rotation (radians) of the test set
+
+def sample_spherical(npoints, ndim=3):
+    vec = np.random.randn(ndim, npoints)
+    vec /= np.linalg.norm(vec, axis=0)
+    return vec.T
 
 def squared_distance(A, B):
     return np.sum(paired_distances(A, B) ** 2)
@@ -45,7 +51,7 @@ def plot3d(A, B):
     ax.set_zlabel('Z Label')
     plt.ion()
 
-    plt.pause(1)  #显示秒数
+    plt.pause(1)
     plt.close()
     return
 
@@ -63,7 +69,7 @@ def generate_set(A, B):
         B = temp
     return A, B
 
-def test_best_fit(A):
+def test_best_fit(A, shuffle = 1):
 
     # Generate a random dataset
 
@@ -83,10 +89,11 @@ def test_best_fit(A):
         B += np.random.randn(N, dim) * noise_sigma
         
         # Shuffle to disrupt correspondence
-        np.random.shuffle(B)
+        if (shuffle == 1):
+            np.random.shuffle(B)
 
-        plot3d(A, B)
         print("Normal squared_distance", squared_distance(A, B))
+        plot3d(A, B)
 
         # Find best fit transform
         A -= rmsd.centroid(A)
@@ -99,12 +106,10 @@ def test_best_fit(A):
 
         # Transform C
         C = np.dot(T, C.T).T
-
         C = C[:, 0:3]
-        plot3d(A, C)
         
         print("Rotated squared_distance", squared_distance(A, C))
-
+        plot3d(A, C)
         #assert np.allclose(C[:,0:3], A, atol=6*noise_sigma) # T should transform B (or C) to A
         #assert np.allclose(-t1, t, atol=6*noise_sigma)      # t and t1 should be inverses
         #assert np.allclose(R1.T, R, atol=6*noise_sigma)     # R and R1 should be inverses
@@ -112,7 +117,7 @@ def test_best_fit(A):
     return
 
 
-def test_icp(A):
+def test_icp(A, shuffle = 1):
 
     # Generate a random dataset
     
@@ -132,16 +137,22 @@ def test_icp(A):
         B += np.random.randn(N, dim) * noise_sigma
 
         # Shuffle to disrupt correspondence
-        np.random.shuffle(B)
+        if (shuffle == 1):
+            np.random.shuffle(B)
 
-        plot3d(A, B)
+        #B[0:100] = 0
+        #Bcenter = rmsd.centroid(B)
+        #B[0:100] = Bcenter
+
         print("Normal squared_distance", squared_distance(A, B))
+        plot3d(A, B)
 
         # Run ICP
         A -= rmsd.centroid(A)
         B -= rmsd.centroid(B)
         T, distances, iterations = icp.icp(B, A, tolerance=0.000001)
 
+        print(T.shape)
         # Make C a homogeneous representation of B
         C = np.ones((N, 4))
         C[:,0:3] = np.copy(B)
@@ -149,9 +160,9 @@ def test_icp(A):
         # Transform C
         C = np.dot(T, C.T).T
         C = C[:, 0:3]
-
-        plot3d(A, C)
+        
         print("Rotated squared_distance", squared_distance(A, C))
+        plot3d(A, C)
 
         #assert np.mean(distances) < 6*noise_sigma                   # mean error should be small
         #assert np.allclose(T[0:3,0:3].T, R, atol=6*noise_sigma)     # T and R should be inverses
@@ -161,8 +172,12 @@ def test_icp(A):
 
 
 if __name__ == "__main__":
-    A = np.random.rand(N, dim)
-    print('===test best fit===')
-    test_best_fit(A)
+    A = sample_spherical(N)
+    for point in A:
+        if (point[2] < 0):
+            point[2] = 0
+    #A = np.random.rand(N, dim)
+    #print('===test best fit===')
+    #test_best_fit(A, shuffle = 1)
     print('===test icp===')
-    test_icp(A)
+    test_icp(A, shuffle = 1)
