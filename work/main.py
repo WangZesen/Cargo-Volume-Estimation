@@ -1,7 +1,12 @@
 from kinect import *
 from image import *
-import cv2, copy
+import cv2, copy, os, shutil
 import numpy as np
+
+def pointCloudToFile(points, frame_no):
+    with open('pc_cache/pc_{}.csv'.format(str(frame_no).zfill(4)), 'w') as f:
+        for i in range(len(points)):
+            f.write('{}, {}, {}\n'.format(points[i][0], points[i][1], points[i][2]))
 
 if __name__ == '__main__':
 
@@ -10,6 +15,9 @@ if __name__ == '__main__':
     background = None
 
     frame_no = 0
+
+    shutil.rmtree('pc_cache')
+    os.mkdir('pc_cache')
 
     while True:
 
@@ -32,26 +40,25 @@ if __name__ == '__main__':
         else:
 
             diff = np.abs(background - i_depth)
-            mask = np.zeros((i_depth.shape[0], i_depth.shape[1], 3))
+            color_mask = np.zeros((i_depth.shape[0], i_depth.shape[1], 3))
             # mask[diff > 0.005] = 255
 
             for i in range(i_depth.shape[0]):
                 for j in range(i_depth.shape[1]):
                     if diff[i][j] > 0.005:
-                        mask[i][j][0] = 255
+                        color_mask[i][j][0] = 255
 
-            cv2.imshow('mask', mask)
-
+            cv2.imshow('mask', color_mask)
 
             ret, binary = cv2.threshold(i_depth, 0, 255, cv2.THRESH_BINARY)
 
-            #_,contours, hierarchy = cv2.findContours(ret, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-            #cv2.drawContours(img, contours, -1, (0,0,255), 3)
-            #cv2.imshow("result", img)
-
             cv2.imshow('binary', binary)
+        
+        diff = np.abs(background - i_depth)
+        points = transform.depthToPointCloudWithMask(device, depth, diff > 0.005)
 
-        points = transform.depthToPointCloud(device, depth)
+        np.save('pc_cache/pc_{}.npy'.format(str(frame_no).zfill(4)), points)
+        pointCloudToFile(points, frame_no)
 
         cv2.imshow('ir', i_ir)
         cv2.imshow('depth', i_depth)

@@ -15,3 +15,13 @@ def depthToPointCloud(device, depth):
             if not np.isnan(pos[0]):
                 points.append(pos)
     return points
+
+def depthToPointCloudWithMask(device, depth, mask):
+    points = []
+    for i in range(depth.height):
+        for j in range(depth.width):
+            if mask[i][j] == True:
+                pos = device.registration.getPointXYZ(depth, i, j)
+                if not np.isnan(pos[0]):
+                    points.append(pos)
+    return points
