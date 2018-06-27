@@ -7,7 +7,7 @@ import sys, copy
 import cv2
 
 class kinectDevice:
-    def __init__(self):
+    def __init__(self, device_no = 0):
         # Package Pipeline
         try:
             from pylibfreenect2 import OpenGLPacketPipeline
@@ -34,7 +34,7 @@ class kinectDevice:
             sys.exit(1)
 
         # Create Device and Frame Listeners
-        self.serial = self.fn.getDeviceSerialNumber(0)
+        self.serial = self.fn.getDeviceSerialNumber(device_no)
         self.device = self.fn.openDevice(self.serial, pipeline = self.pipeline)
         self.listener = SyncMultiFrameListener(FrameType.Color | FrameType.Ir | FrameType.Depth)
 
@@ -72,8 +72,9 @@ class kinectDevice:
         # Get Depth Frame and Color Frame
         depth = self.frames['depth']
         color = self.frames['color']
+        ir = self.frames['ir']
 
-        return depth, color
+        return depth, color, ir
 
     # Release Frame
     def releaseFrame(self):

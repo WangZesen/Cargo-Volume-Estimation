@@ -1,9 +1,10 @@
 import cv2
 import numpy as np
-def frameToImage(depth, color):
+def frameToImage(depth, color, ir):
     i_depth = depth.asarray() / 4500.
     i_color = cv2.resize(color.asarray(), (int(1920 / 3), int(1080 / 3)))
-    return i_depth, i_color
+    i_ir = ir.asarray() / 65535.
+    return i_depth, i_color, i_ir
 
 
 def depthToPointCloud(device, depth):
