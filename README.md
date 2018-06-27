@@ -28,3 +28,7 @@ Detail: https://docs.google.com/document/d/1G0t_qg3npnhR9EYVWwBvk8fxgYTYJX08fPgj
 <pre><code>cd work
 sudo python main.py
 </code></pre>
+
+## Data
+
+Point Cloud Sample Data: https://jbox.sjtu.edu.cn/l/b1kxkP
