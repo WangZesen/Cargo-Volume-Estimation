@@ -1,1 +1,1 @@
-__all__ = ['filter', 'transform']
+__all__ = ['filter', 'transform', 'locate']

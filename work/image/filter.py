@@ -1,7 +1,7 @@
 import cv2
 
 # Smooth Depth Frame
-def smoothDepthFrame(depth):
+def smoothFrame(depth):
 
     # Simple Median Blurring
     blur_depth = cv2.medianBlur(depth, 5)
