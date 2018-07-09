@@ -1,20 +1,28 @@
 from kinect import *
 from image import *
 from state import *
+from space import *
 import cv2, copy, os, shutil, sys
 import numpy as np
 
+def pointCloudToFileNumpy(points, frame_no):
+    with open('Save_Point_Cloud/pc_offset_{}.csv'.format(str(frame_no).zfill(4)), 'w') as f:
+        points_list = points.tolist()
+        for i in range(len(points_list)):
+            str_points = [str(j) for j in points_list[i]]
+            f.write(','.join(str_points) + '\n')
+
 def pointCloudToLogFile(points, frame_no):
-    with open('log/pc_{}.csv'.format(str(frame_no).zfill(4)), 'w') as f:
+    with open('Save_Log/pc_{}.csv'.format(str(frame_no).zfill(4)), 'w') as f:
         for i in range(len(points)):
             str_points = [str(j) for j in points[i]]
             f.write(','.join(str_points) + '\n')
 
 def pointCloudToFile(points, frame_no):
-    with open('pc_cache/pc_{}.csv'.format(str(frame_no).zfill(4)), 'w') as f:
+    with open('Save_Point_Cloud/pc_{}.csv'.format(str(frame_no).zfill(4)), 'w') as f:
         for i in range(len(points)):
             str_points = [str(j) for j in points[i]]
-            f.write(','.join(str_points))
+            f.write(','.join(str_points) + '\n')
 
 def checkDetectPoint(diff, x, y):
     for i in range(3):
@@ -28,19 +36,33 @@ if __name__ == '__main__':
     # Initialization
     device = kinectInit.kinectDevice()
     frame_no = 0
+    valid_count = 0
+    valid_point_clouds = []
+    valid_feature = []
+    surface_points = []
 
-    # Create Folder for Point Cloud Storage
+
+    # Create Folder for Point Cloud Storage, Log and Image
     try:
-        shutil.rmtree('pc_cache')
+        shutil.rmtree('Save_Point_Cloud')
     except:
         pass
     try:
-        shutil.rmtree('log')
+        shutil.rmtree('Save_Log')
     except:
         pass
-
-    os.mkdir('pc_cache')
-    os.mkdir('log')
+    try:
+        shutil.rmtree('Save_Image')
+    except:
+        pass
+    try:
+        shutil.rmtree('Save_Temp')
+    except:
+        pass
+    os.mkdir('Save_Point_Cloud')
+    os.mkdir('Save_Log')
+    os.mkdir('Save_Image')
+    os.mkdir('Save_Temp')
 
     # Record Background
     depth, color, ir = device.getNewFrame()
@@ -50,8 +72,8 @@ if __name__ == '__main__':
 
     # Save Log
     if 'log' in sys.argv:
-        logfile = open('log/log.txt', 'w')
-        cv2.imwrite('log/background.jpg', background * 256)
+        logfile = open('Save_Log/log.txt', 'w')
+        cv2.imwrite('Save_Log/background.jpg', background * 255)
 
     # Select Device Configuration
     device_tag = 'device1'
@@ -68,11 +90,12 @@ if __name__ == '__main__':
         # Read Frames
         depth, color, ir = device.getNewFrame()
         i_depth, i_color, i_ir = transform.frameToImage(depth, color, ir)
-        diff = np.abs(background - i_depth)
+        diff = background - i_depth
 
         # Save IR Image and Depth Image
-        cv2.imwrite('cache/1_ir_{}.jpg'.format(str(frame_no).zfill(4)), i_ir * 256)
-        cv2.imwrite('cache/1_depth_{}.jpg'.format(str(frame_no).zfill(4)), i_depth * 256)
+        if 'image' in sys.argv:
+            cv2.imwrite('Save_Image/{}_ir_{}.jpg'.format(device_tag, str(frame_no).zfill(4)), i_ir * 255)
+            cv2.imwrite('Save_Image/{}_depth_{}.jpg'.format(device_tag, str(frame_no).zfill(4)), i_depth * 255)
 
         # Check Detect Points
         detect_data = 2 * checkDetectPoint(diff, detect_point[0][0], detect_point[0][1]) + checkDetectPoint(diff, detect_point[1][0], detect_point[1][1])
@@ -94,25 +117,78 @@ if __name__ == '__main__':
         i_depth_blur = filter.smoothFrame(i_depth)
         i_ir_blur = filter.smoothFrame(i_ir)
 
+        '''
         # Get and Save Transformed Point Cloud
         points = transform.depthToPointCloudWithMask(device, depth, diff > 0.005)
-        np.save('pc_cache/pc_{}.npy'.format(str(frame_no).zfill(4)), points)
+        np.save('Save_Point_Cloud/pc_{}.npy'.format(str(frame_no).zfill(4)), points)
         pointCloudToFile(points, frame_no)
+        '''
 
         # Find the Feature point
-        feature_pos = locate.findFeaturePoint(i_ir_blur)
+        feature_pos = locate.findFeaturePoint(i_ir_blur, device_tag)
         i_ir_mark = locate.drawFeaturePoint(i_ir_blur, feature_pos)
+        feature_pos_neighbor = (feature_pos[0] + detectConfig.feature_offset[device_tag][0], feature_pos[1] + detectConfig.feature_offset[device_tag][1])
+        i_ir_mark = locate.drawFeaturePoint(i_ir_mark, feature_pos_neighbor)
         cv2.imshow('ir', i_ir_mark)
+
+        #
+        # State Machine
+        #
+        if state_machine.cur_state == 'wait': # wait: Do Nothing
+            valid_count = 0
+            valid_point_clouds = []
+            valid_feature = []
+            surface_points = []
+        elif state_machine.cur_state == 'on': # on: record image
+            points = transform.depthToPointCloudWithDownSample(device, depth, diff > 0.005, 4)
+            # pointCloudToFile(points, valid_count)
+            valid_point_clouds.append(points)
+
+            feature_2d = locate.findFeaturePoint(i_ir_blur, device_tag)
+            feature_2d_neighbor = (feature_2d[0] + detectConfig.feature_offset[device_tag][0], feature_2d[1] + detectConfig.feature_offset[device_tag][1])
+            feature_3d = transform.depthToPoint(device, depth, feature_2d[0], feature_2d[1])
+            feature_3d_neighbor = transform.depthToPoint(device, depth, feature_2d_neighbor[0], feature_2d_neighbor[1])
+            valid_feature.append(feature_3d)
+            surface_points.append(feature_3d)
+            surface_points.append(feature_3d_neighbor)
+            valid_count += 1
+
+        elif state_machine.cur_state == 'analyze': # analyze: align point cloud
+
+            plane_params = fit.fitPlane(surface_points)
+            direction = locate.fitMoveDirection(valid_feature)
+            valid_point_clouds = np.array(valid_point_clouds)
+
+            for i in range(valid_count):
+                valid_point_clouds[i] = np.array(valid_point_clouds[i])
+                print (valid_point_clouds[i].shape)
+
+            pointCloudToFileNumpy(valid_point_clouds[0], 0)
+            for i in range(1, valid_count):
+                offset = locate.calOffset(valid_feature[0], valid_feature[i], direction)
+                valid_point_clouds[i] += offset
+                pointCloudToFileNumpy(valid_point_clouds[i], i)
+
+
+
+        elif state_machine.cur_state == 'out':
+            valid_count = 0
+            valid_feature = []
+            valid_point_clouds = []
+            surface_points = []
+        elif state_machine.cur_state == 'err': # err: clear data
+            pass
+
 
         # Log File
         if 'log' in sys.argv:
             all_points = transform.depthToPointCloudWithPos(device, depth)
-            np.save('log/pc_{}.npy'.format(str(frame_no).zfill(4)), all_points)
+            np.save('Save_Log/pc_{}.npy'.format(str(frame_no).zfill(4)), all_points)
             pointCloudToLogFile(all_points, frame_no)
             logfile.write('{} {}\n'.format(feature_pos[0], feature_pos[1]))
-            cv2.imwrite('log/depth_{}.jpg'.format(str(frame_no).zfill(4)), i_depth_blur * 256)
-            cv2.imwrite('log/ir_{}.jpg'.format(str(frame_no).zfill(4)), i_ir_blur * 256)
-            cv2.imwrite('log/ir_mark_{}.jpg'.format(str(frame_no).zfill(4)), i_ir_mark * 256)
+            cv2.imwrite('Save_Log/depth_{}.jpg'.format(str(frame_no).zfill(4)), i_depth_blur * 255)
+            cv2.imwrite('Save_Log/ir_{}.jpg'.format(str(frame_no).zfill(4)), i_ir_blur * 255)
+            cv2.imwrite('Save_Log/ir_mark_{}.jpg'.format(str(frame_no).zfill(4)), i_ir_mark * 255)
 
         frame_no += 1
         device.releaseFrame()

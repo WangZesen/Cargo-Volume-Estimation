@@ -1,7 +1,7 @@
 import cv2, copy
 import numpy as np
 
-def findFeaturePoint(ir_image):
+def findFeaturePoint(ir_image, device_tag):
 
     gray = cv2.cvtColor(ir_image, cv2.COLOR_BGR2GRAY)
     gray = np.float32(gray)
@@ -9,12 +9,18 @@ def findFeaturePoint(ir_image):
     dst = cv2.cornerHarris(gray, 9, 7, 0.04)
     dst = cv2.dilate(dst, None)
 
-    corner = dst > 0.01 * dst.max()
-    for i in xrange(ir_image.shape[0] - 1, -1, -1):
-        for j in range(ir_image.shape[1]):
-            if corner[i][j]:
-                return (i, j)
-
+    if device_tag == 'device1':
+        corner = dst > 0.01 * dst.max()
+        for i in xrange(ir_image.shape[0] - 1, -1, -1):
+            for j in range(ir_image.shape[1]):
+                if corner[i][j]:
+                    return (i, j)
+    else:
+        corner = dst > 0.01 * dst.max()
+        for i in range(ir_image.shape[1]):
+            for j in range(ir_image.shape[0]):
+                if corner[j][i]:
+                    return (j, i)
     return (-1, -1)
 
 
@@ -33,7 +39,8 @@ def drawFeaturePoint(ir_image, pos):
     return ir_mark
 
 def fitMoveDirection(points):
-    line = cv2.fitLine(points, cv2.DIST_L2, 0, 0, 0.01)
+    np_points = np.array(points)
+    line = cv2.fitLine(np_points, cv2.DIST_L2, 0, 0, 0.01)
     return [line[0][0], line[1][0], line[2][0]]
 
 def calOffset(point_x, point_y, direction):
