@@ -6,12 +6,19 @@ import cv2, copy, os, shutil, sys
 import numpy as np
 import threading, socket
 
-def pointCloudToFileNumpy(points, frame_no):
-    with open('Save_Point_Cloud/pc_offset_{}.csv'.format(str(frame_no).zfill(4)), 'w') as f:
-        points_list = points.tolist()
-        for i in range(len(points_list)):
-            str_points = [str(j) for j in points_list[i]]
-            f.write(','.join(str_points) + '\n')
+def pointCloudToFileNumpy(points, frame_no, device_tag, recv_cargo):
+    if device_tag == 'device1':
+        with open('Save_Point_Cloud/0/{}_pc_offset_{}.csv'.format(str(recv_cargo).zfill(3), str(frame_no).zfill(4)), 'w') as f:
+            points_list = points.tolist()
+            for i in range(len(points_list)):
+                str_points = [str(j) for j in points_list[i]]
+                f.write(','.join(str_points) + '\n')
+    else:
+        with open('Save_Point_Cloud/1/{}_pc_offset_{}.csv'.format(str(recv_cargo).zfill(3), str(frame_no).zfill(4)), 'w') as f:
+            points_list = points.tolist()
+            for i in range(len(points_list)):
+                str_points = [str(j) for j in points_list[i]]
+                f.write(','.join(str_points) + '\n')
 
 def pointCloudToLogFile(points, frame_no):
     with open('Save_Log/pc_{}.csv'.format(str(frame_no).zfill(4)), 'w') as f:
@@ -32,18 +39,18 @@ def checkDetectPoint(diff, x, y):
                 return 0
     return 1
 
-def socket_client():
+def socket_client(filepath):
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.connect(('127.0.0.1', 6666))
     except socket.error as msg:
         print (msg)
-        sys.exit(1)
+        return
 
     print (s.recv(1024))
 
     while 1:
-        filepath = input(str.encode('please input file path: '))
+
         if os.path.isfile(filepath):
             fileinfo_size = struct.calcsize('128sl')
             print (type(os.path.basename(filepath)))
@@ -61,53 +68,6 @@ def socket_client():
                 s.send(data)
         s.close()
         break
-
-def deal_data():
-    print ('Accept new connection from {0}'.format(addr))
-    #conn.settimeout(500)
-
-    while 1:
-        fileinfo_size = struct.calcsize('128sl')
-        buf = conn.recv(fileinfo_size)
-        if buf:
-            filename, filesize = struct.unpack('128sl', buf)
-            fn = filename.strip(str.encode('\00'))
-            new_filename = os.path.join('./', 'new_' + str(fn, 'utf-8'))
-            print ('file new name is {0}, filesize if {1}'.format(new_filename,
-                                                                 filesize))
-            recvd_size = 0
-            fp = open(new_filename, 'wb')
-            print ('start receiving...')
-
-            while not recvd_size == filesize:
-                if filesize - recvd_size > 1024:
-                    data = conn.recv(1024)
-                    recvd_size += len(data)
-                else:
-                    data = conn.recv(filesize - recvd_size)
-                    recvd_size = filesize
-                fp.write(data)
-            fp.close()
-            print ('end receive...')
-        conn.close()
-        break
-
-def socket_service():
-    try:
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        s.bind(('127.0.0.1', 6666))
-        s.listen(10)
-    except socket.error as msg:
-        print (msg)
-        sys.exit(1)
-
-    global recv_cargo
-
-    while 1:
-        conn, addr = s.accept()
-        deal_data(conn, addr)
-        recv_cargo += 1
 
 if __name__ == '__main__':
 
@@ -138,6 +98,8 @@ if __name__ == '__main__':
     except:
         pass
     os.mkdir('Save_Point_Cloud')
+    os.mkdir('Save_Point_Cloud/0')
+    os.mkdir('Save_Point_Cloud/1')
     os.mkdir('Save_Log')
     os.mkdir('Save_Image')
     os.mkdir('Save_Temp')
@@ -242,11 +204,39 @@ if __name__ == '__main__':
                 valid_point_clouds[i] = np.array(valid_point_clouds[i])
                 total_n += valid_point_clouds[i].shape[0]
             print ('total point N: {}'.format(total_n))
-            pointCloudToFileNumpy(valid_point_clouds[0], 0)
+            pointCloudToFileNumpy(valid_point_clouds[0], 0, device_tag, recv_cargo)
             for i in range(1, valid_count):
                 offset = locate.calOffset(valid_feature[0], valid_feature[i], direction)
                 valid_point_clouds[i] += offset
-                pointCloudToFileNumpy(valid_point_clouds[i], i)
+                pointCloudToFileNumpy(valid_point_clouds[i], i, device_tag, recv_cargo)
+
+
+            if device_tag == 'device1':
+                with open('Save_Point_Cloud/0/{}_log.txt'.format(str(recv_cargo).zfill(3)), 'w') as f:
+                    f.write(str(recv_cargo) + '\n')
+                    f.write(str(valid_count) + '\n')
+                    f.write('{}, {}, {}\n'.format(plane_params[0], plane_params[1], plane_params[2]))
+                    f.write('{}, {}, {}\n'.format(direction[0], direction[1], direction[2]))
+                    f.write('{}, {}, {}\n'.format(strip_direction[0], strip_direction[1], strip_direction[2]))
+                    f.write('{}, {}, {}\n'.format(valid_feature[0][0], valid_feature[0][1], valid_feature[0][2]))
+                for i in range(valid_count):
+                    try:
+                        socket_client('Save_Point_Cloud/0/{}_pc_offset_{}.csv'.format(recv_cargo, i))
+                    except:
+                        pass
+                try:
+                    socket_client('Save_Point_Cloud/0/{}_log.txt'.format(str(recv_cargo).zfill(3)))
+                except:
+                    pass
+            else:
+                with open('Save_Point_Cloud/1/{}_log.txt'.format(str(recv_cargo).zfill(3)), 'w') as f:
+                    f.write(str(recv_cargo) + '\n')
+                    f.write(str(valid_count) + '\n')
+                    f.write('{}, {}, {}\n'.format(plane_params[0], plane_params[1], plane_params[2]))
+                    f.write('{}, {}, {}\n'.format(direction[0], direction[1], direction[2]))
+                    f.write('{}, {}, {}\n'.format(strip_direction[0], strip_direction[1], strip_direction[2]))
+                    f.write('{}, {}, {}\n'.format(valid_feature[0][0], valid_feature[0][1], valid_feature[0][2]))
+            recv_cargo += 1
 
             # Test Plane Formula
             '''
