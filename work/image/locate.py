@@ -41,12 +41,12 @@ def drawFeaturePoint(ir_image, pos):
 def fitMoveDirection(points):
     np_points = np.array(points)
     line = cv2.fitLine(np_points, cv2.DIST_L2, 0, 0, 0.01)
-    return [line[0][0], line[1][0], line[2][0]]
+    length = np.sqrt(line[0][0] ** 2 + line[1][0] ** 2 + line[2][0] ** 2)
+    return [line[0][0] / length, line[1][0] / length, line[2][0] / length]
 
 def calOffset(point_x, point_y, direction):
     k = (point_x[0] - point_y[0]) / direction[0]
     return [k * direction[0], k * direction[1], k * direction[2]]
-
 
 if __name__ == '__main__':
 

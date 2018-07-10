@@ -5,15 +5,18 @@ from space import *
 import cv2, copy, os, shutil, sys
 import numpy as np
 import threading, socket
+import struct
 
 def pointCloudToFileNumpy(points, frame_no, device_tag, recv_cargo):
     if device_tag == 'device1':
+        np.save('Save_Point_Cloud/0/{}_pc_offset_{}.npy'.format(str(recv_cargo).zfill(3), str(frame_no).zfill(4)), points)
         with open('Save_Point_Cloud/0/{}_pc_offset_{}.csv'.format(str(recv_cargo).zfill(3), str(frame_no).zfill(4)), 'w') as f:
             points_list = points.tolist()
             for i in range(len(points_list)):
                 str_points = [str(j) for j in points_list[i]]
                 f.write(','.join(str_points) + '\n')
     else:
+        np.save('Save_Point_Cloud/1/{}_pc_offset_{}.npy'.format(str(recv_cargo).zfill(3), str(frame_no).zfill(4)), points)
         with open('Save_Point_Cloud/1/{}_pc_offset_{}.csv'.format(str(recv_cargo).zfill(3), str(frame_no).zfill(4)), 'w') as f:
             points_list = points.tolist()
             for i in range(len(points_list)):
@@ -42,6 +45,7 @@ def checkDetectPoint(diff, x, y):
 def socket_client(filepath):
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        # s.connect(('192.168.43.31', 6666))
         s.connect(('127.0.0.1', 6666))
     except socket.error as msg:
         print (msg)
@@ -66,6 +70,8 @@ def socket_client(filepath):
                     print ('{0} file send over...'.format(filepath))
                     break
                 s.send(data)
+        else:
+            print 'lalala'
         s.close()
         break
 
@@ -210,7 +216,6 @@ if __name__ == '__main__':
                 valid_point_clouds[i] += offset
                 pointCloudToFileNumpy(valid_point_clouds[i], i, device_tag, recv_cargo)
 
-
             if device_tag == 'device1':
                 with open('Save_Point_Cloud/0/{}_log.txt'.format(str(recv_cargo).zfill(3)), 'w') as f:
                     f.write(str(recv_cargo) + '\n')
@@ -221,7 +226,7 @@ if __name__ == '__main__':
                     f.write('{}, {}, {}\n'.format(valid_feature[0][0], valid_feature[0][1], valid_feature[0][2]))
                 for i in range(valid_count):
                     try:
-                        socket_client('Save_Point_Cloud/0/{}_pc_offset_{}.csv'.format(recv_cargo, i))
+                        socket_client('Save_Point_Cloud/0/{}_pc_offset_{}.npy'.format(str(recv_cargo).zfill(3), str(i).zfill(4)))
                     except:
                         pass
                 try:
