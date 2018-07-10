@@ -22,6 +22,8 @@ Detail: https://docs.google.com/document/d/1G0t_qg3npnhR9EYVWwBvk8fxgYTYJX08fPgj
 - [x] 单相机多张照片合并(闪光带定位)
 - [ ] 双相机产生的两个点云合并
 - [ ] 需要一个Python的高效实时显示点云的库 (mayavi, moviepy可用,但需要Python3)
+- [ ] 3维凸包
+- [ ] 转化成模型文件
 
 ## Run:
 
