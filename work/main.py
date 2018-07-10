@@ -4,6 +4,7 @@ from state import *
 from space import *
 import cv2, copy, os, shutil, sys
 import numpy as np
+import threading, socket
 
 def pointCloudToFileNumpy(points, frame_no):
     with open('Save_Point_Cloud/pc_offset_{}.csv'.format(str(frame_no).zfill(4)), 'w') as f:
@@ -31,6 +32,83 @@ def checkDetectPoint(diff, x, y):
                 return 0
     return 1
 
+def socket_client():
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.connect(('127.0.0.1', 6666))
+    except socket.error as msg:
+        print (msg)
+        sys.exit(1)
+
+    print (s.recv(1024))
+
+    while 1:
+        filepath = input(str.encode('please input file path: '))
+        if os.path.isfile(filepath):
+            fileinfo_size = struct.calcsize('128sl')
+            print (type(os.path.basename(filepath)))
+            print (type(os.stat(filepath).st_size))
+            fhead = struct.pack('128sl', str.encode(os.path.basename(filepath)), os.stat(filepath).st_size)
+            s.send(fhead)
+            print ('client filepath: {0}'.format(filepath))
+
+            fp = open(filepath, 'rb')
+            while 1:
+                data = fp.read(1024)
+                if not data:
+                    print ('{0} file send over...'.format(filepath))
+                    break
+                s.send(data)
+        s.close()
+        break
+
+def deal_data():
+    print ('Accept new connection from {0}'.format(addr))
+    #conn.settimeout(500)
+
+    while 1:
+        fileinfo_size = struct.calcsize('128sl')
+        buf = conn.recv(fileinfo_size)
+        if buf:
+            filename, filesize = struct.unpack('128sl', buf)
+            fn = filename.strip(str.encode('\00'))
+            new_filename = os.path.join('./', 'new_' + str(fn, 'utf-8'))
+            print ('file new name is {0}, filesize if {1}'.format(new_filename,
+                                                                 filesize))
+            recvd_size = 0
+            fp = open(new_filename, 'wb')
+            print ('start receiving...')
+
+            while not recvd_size == filesize:
+                if filesize - recvd_size > 1024:
+                    data = conn.recv(1024)
+                    recvd_size += len(data)
+                else:
+                    data = conn.recv(filesize - recvd_size)
+                    recvd_size = filesize
+                fp.write(data)
+            fp.close()
+            print ('end receive...')
+        conn.close()
+        break
+
+def socket_service():
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        s.bind(('127.0.0.1', 6666))
+        s.listen(10)
+    except socket.error as msg:
+        print (msg)
+        sys.exit(1)
+
+    global recv_cargo
+
+    while 1:
+        conn, addr = s.accept()
+        deal_data(conn, addr)
+        recv_cargo += 1
+
 if __name__ == '__main__':
 
     # Initialization
@@ -40,7 +118,7 @@ if __name__ == '__main__':
     valid_point_clouds = []
     valid_feature = []
     surface_points = []
-
+    recv_cargo = 0
 
     # Create Folder for Point Cloud Storage, Log and Image
     try:
@@ -141,7 +219,6 @@ if __name__ == '__main__':
             surface_points = []
         elif state_machine.cur_state == 'on': # on: record image
             points = transform.depthToPointCloudWithDownSample(device, depth, diff > 0.005, 4)
-            # pointCloudToFile(points, valid_count)
             valid_point_clouds.append(points)
 
             feature_2d = locate.findFeaturePoint(i_ir_blur, device_tag)
@@ -157,25 +234,36 @@ if __name__ == '__main__':
 
             plane_params = fit.fitPlane(surface_points)
             direction = locate.fitMoveDirection(valid_feature)
+            strip_direction = fit.getReflectiveDirection(plane_params, direction)
             valid_point_clouds = np.array(valid_point_clouds)
 
+            total_n = 0
             for i in range(valid_count):
                 valid_point_clouds[i] = np.array(valid_point_clouds[i])
-                print (valid_point_clouds[i].shape)
-
+                total_n += valid_point_clouds[i].shape[0]
+            print ('total point N: {}'.format(total_n))
             pointCloudToFileNumpy(valid_point_clouds[0], 0)
             for i in range(1, valid_count):
                 offset = locate.calOffset(valid_feature[0], valid_feature[i], direction)
                 valid_point_clouds[i] += offset
                 pointCloudToFileNumpy(valid_point_clouds[i], i)
 
-
+            # Test Plane Formula
+            '''
+            test_point = []
+            for i in range(100):
+                for j in range(100):
+                    test_point.append([(i - 50) / 25., (j - 50) / 25., plane_params[0] * (i - 50) / 25. + plane_params[1] * (j - 50) / 25. + plane_params[2]])
+            test_point = np.array(test_point)
+            pointCloudToFileNumpy(test_point, valid_count)
+            '''
 
         elif state_machine.cur_state == 'out':
             valid_count = 0
             valid_feature = []
             valid_point_clouds = []
             surface_points = []
+
         elif state_machine.cur_state == 'err': # err: clear data
             pass
 

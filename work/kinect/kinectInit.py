@@ -48,7 +48,8 @@ class kinectDevice:
         # Set Camera Parameters
         self._ir_params = self.device.getIrCameraParams()
         self._color_params = self.device.getColorCameraParams()
-
+        
+        '''
         self._ir_params.fx = cameraParams.params['ir_fx']
         self._ir_params.fy = cameraParams.params['ir_fy']
         self._ir_params.cx = cameraParams.params['ir_cx']
@@ -58,7 +59,7 @@ class kinectDevice:
         self._color_params.fy = cameraParams.params['col_fy']
         self._color_params.cx = cameraParams.params['col_cx']
         self._color_params.cy = cameraParams.params['col_cy']
-
+        '''
         # Registration
         self.registration = Registration(self._ir_params, self._color_params)
 
