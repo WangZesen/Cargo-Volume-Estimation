@@ -7,6 +7,12 @@ import numpy as np
 import threading, socket
 import struct
 
+def saveFinalPointCloud(points, frame_no, device_tag, recv_cargo):
+    if device_tag == 'device1':
+        np.save('Save_Point_Cloud/0/{}_pc_offset.npy'.format(str(recv_cargo).zfill(3)), points)
+    if device_tag == 'device2':
+        np.save('Save_Point_Cloud/1/{}_pc_offset.npy'.format(str(recv_cargo).zfill(3)), points)
+
 def pointCloudToFileNumpy(points, frame_no, device_tag, recv_cargo):
     if device_tag == 'device1':
         np.save('Save_Point_Cloud/0/{}_pc_offset_{}.npy'.format(str(recv_cargo).zfill(3), str(frame_no).zfill(4)), points)
@@ -45,8 +51,8 @@ def checkDetectPoint(diff, x, y):
 def socket_client(filepath):
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        # s.connect(('192.168.43.31', 6666))
-        s.connect(('127.0.0.1', 6666))
+        s.connect(('192.168.43.31', 6666))
+        # s.connect(('127.0.0.1', 6666))
     except socket.error as msg:
         print (msg)
         return
@@ -203,7 +209,7 @@ if __name__ == '__main__':
             plane_params = fit.fitPlane(surface_points)
             direction = locate.fitMoveDirection(valid_feature)
             strip_direction = fit.getReflectiveDirection(plane_params, direction)
-            valid_point_clouds = np.array(valid_point_clouds)
+            # valid_point_clouds = np.array(valid_point_clouds)
 
             total_n = 0
             for i in range(valid_count):
@@ -216,19 +222,21 @@ if __name__ == '__main__':
                 valid_point_clouds[i] += offset
                 pointCloudToFileNumpy(valid_point_clouds[i], i, device_tag, recv_cargo)
 
+            saveFinalPointCloud(valid_point_clouds, 0, device_tag, recv_cargo)
+
             if device_tag == 'device1':
                 with open('Save_Point_Cloud/0/{}_log.txt'.format(str(recv_cargo).zfill(3)), 'w') as f:
                     f.write(str(recv_cargo) + '\n')
                     f.write(str(valid_count) + '\n')
+                    # f.write('3\n')
                     f.write('{}, {}, {}\n'.format(plane_params[0], plane_params[1], plane_params[2]))
                     f.write('{}, {}, {}\n'.format(direction[0], direction[1], direction[2]))
                     f.write('{}, {}, {}\n'.format(strip_direction[0], strip_direction[1], strip_direction[2]))
                     f.write('{}, {}, {}\n'.format(valid_feature[0][0], valid_feature[0][1], valid_feature[0][2]))
-                for i in range(valid_count):
-                    try:
-                        socket_client('Save_Point_Cloud/0/{}_pc_offset_{}.npy'.format(str(recv_cargo).zfill(3), str(i).zfill(4)))
-                    except:
-                        pass
+                try:
+                    socket_client('Save_Point_Cloud/0/{}_pc_offset.npy'.format(str(recv_cargo).zfill(3), str(i).zfill(4)))
+                except:
+                    pass
                 try:
                     socket_client('Save_Point_Cloud/0/{}_log.txt'.format(str(recv_cargo).zfill(3)))
                 except:
