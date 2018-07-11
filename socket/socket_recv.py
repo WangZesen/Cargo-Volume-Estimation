@@ -10,7 +10,7 @@ def socket_service():
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        s.bind(('127.0.0.1', 6666))
+        s.bind(('192.168.43.31', 6666))			# remember to change to the IP of this device
         s.listen(10)
     except socket.error as msg:
         print (msg)
@@ -33,7 +33,7 @@ def deal_data(conn, addr):
         if buf:
             filename, filesize = struct.unpack('128sl', buf)
             fn = filename.strip(str.encode('\00'))
-            new_filename = os.path.join('./', 'new_' + str(fn, 'utf-8'))
+            new_filename = os.path.join('./../work/Save_Point_Cloud/0/', fn)
             print ('file new name is {0}, filesize if {1}'.format(new_filename,
                                                                  filesize))
 
