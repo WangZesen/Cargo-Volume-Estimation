@@ -14,13 +14,13 @@ def findFeaturePoint(ir_image, device_tag):
         for i in xrange(ir_image.shape[0] - 1, -1, -1):
             for j in range(ir_image.shape[1]):
                 if corner[i][j]:
-                    return (i, j)
+                    return (i - 5, j + 5)
     else:
         corner = dst > 0.01 * dst.max()
         for i in range(ir_image.shape[1]):
             for j in range(ir_image.shape[0]):
                 if corner[j][i]:
-                    return (j, i)
+                    return (j + 2, i + 3)
     return (-1, -1)
 
 
