@@ -6,7 +6,7 @@ def findFeaturePoint(ir_image, device_tag):
     gray = cv2.cvtColor(ir_image, cv2.COLOR_BGR2GRAY)
     gray = np.float32(gray)
 
-    dst = cv2.cornerHarris(gray, 9, 7, 0.04)
+    dst = cv2.cornerHarris(gray, 9, 7, k = 0.04)
     dst = cv2.dilate(dst, None)
 
     if device_tag == 'device1':
@@ -30,10 +30,7 @@ def drawFeaturePoint(ir_image, pos):
         for i in range(3):
             for j in range(3):
                 try:
-                    ir_mark[pos[0] + i][pos[1] + j] = [0, 0, 255]
-                    ir_mark[pos[0] + i][pos[1] - j] = [0, 0, 255]
-                    ir_mark[pos[0] - i][pos[1] + j] = [0, 0, 255]
-                    ir_mark[pos[0] - i][pos[1] - j] = [0, 0, 255]
+                    ir_mark[pos[0] + i - 1][pos[1] + j - 1] = [0, 0, 255]
                 except:
                     pass
     return ir_mark
@@ -51,11 +48,11 @@ def calOffset(point_x, point_y, direction):
 if __name__ == '__main__':
 
     for i in range(76):
-        image_path = '../../raw_data/cache/0_ir_00{}.jpg'.format(str(i).zfill(2))
+        image_path = '../../raw_data/cache2/1_ir_{}.jpg'.format(str(i).zfill(4))
         img = cv2.imread(image_path)
         if type(img) == type(None):
             break
-        pos = findFeaturePoint(img)
+        pos = findFeaturePoint(img, 'device1')
         print (pos)
 
         blur_img = cv2.medianBlur(img, 5)
@@ -63,10 +60,17 @@ if __name__ == '__main__':
         if pos[0] != -1:
             for i in range(3):
                 for j in range(3):
-                    blur_img[pos[0] + i][pos[1] + j] = [0, 0, 255]
-                    blur_img[pos[0] + i][pos[1] - j] = [0, 0, 255]
-                    blur_img[pos[0] - i][pos[1] + j] = [0, 0, 255]
-                    blur_img[pos[0] - i][pos[1] - j] = [0, 0, 255]
+                    try:
+                        blur_img[pos[0] + i - 1][pos[1] + j - 1] = [0, 0, 255]
+                    except:
+                        pass
+            pos = (pos[0] + 13, pos[1] - 5)
+            for i in range(3):
+                for j in range(3):
+                    try:
+                        blur_img[pos[0] + i - 1][pos[1] + j - 1] = [0, 0, 255]
+                    except:
+                        pass
 
 
         cv2.imshow('test', blur_img)

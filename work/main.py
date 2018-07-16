@@ -41,12 +41,16 @@ def pointCloudToFile(points, frame_no):
             str_points = [str(j) for j in points[i]]
             f.write(','.join(str_points) + '\n')
 
-def checkDetectPoint(diff, x, y):
-    for i in range(3):
-        for j in range(3):
-            if diff[x + i - 1][y + j - 1] <= 0.005:
-                return 0
-    return 1
+def checkDetectPoint(diff, sensor):
+    state = 0
+    for k in range(len(sensor)):
+        cur_state = 1
+        for i in range(3):
+            for j in range(3):
+                if diff[sensor[k][0] + i - 1][sensor[k][0] + j - 1] <= 0.005:
+                    cur_state = 0
+        state = state | cur_state
+    return state
 
 def socket_client(filepath):
     try:
@@ -150,7 +154,7 @@ if __name__ == '__main__':
             cv2.imwrite('Save_Image/{}_depth_{}.jpg'.format(device_tag, str(frame_no).zfill(4)), i_depth * 255)
 
         # Check Detect Points
-        detect_data = 2 * checkDetectPoint(diff, detect_point[0][0], detect_point[0][1]) + checkDetectPoint(diff, detect_point[1][0], detect_point[1][1])
+        detect_data = 2 * checkDetectPoint(diff, detect_point[0]) + checkDetectPoint(diff, detect_point[1])
 
         # Determine the State
         state_machine.sensorFeed(detect_data)
@@ -158,8 +162,9 @@ if __name__ == '__main__':
         # Show Workspace and Log
         i_ir_work = copy.copy(i_ir)
         cv2.line(i_ir_work, (detect_region[0][0], detect_region[0][1]), (detect_region[1][0], detect_region[1][1]), (255, 0, 255), 3)
-        cv2.circle(i_ir_work, (detect_point[0][1], detect_point[0][0]), 3, (255, 0, 255))
-        cv2.circle(i_ir_work, (detect_point[1][1], detect_point[1][0]), 3, (255, 0, 255))
+        for i in range(len(detect_point[0])):
+            cv2.circle(i_ir_work, (detect_point[0][i][1], detect_point[0][i][0]), 3, (255, 0, 255))
+            cv2.circle(i_ir_work, (detect_point[1][i][1], detect_point[1][i][0]), 3, (255, 0, 255))
         cv2.putText(i_ir_work, "state: {}".format(state_machine.cur_state), (200, 50), 5, 1, (255, 0, 255), 2)
         cv2.putText(i_ir_work, "data: {}".format(detect_data), (200, 100), 5, 1, (255, 0, 255), 2)
         cv2.imshow('workspace', i_ir_work)
