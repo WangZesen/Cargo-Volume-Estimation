@@ -45,7 +45,7 @@ def rotatePoint(point, theta1, theta2):
     point[0], point[2] = point[2] * math.sin(theta2) + point[0] * math.cos(theta2), point[2] * math.cos(theta2) - point[0] * math.sin(theta2)
 
 def alignPointCloud(cargo_no):
-    strip_length = 0.30
+    strip_length = 0.27
 
     point_cloud = [None, None]
     features = [None, None]
