@@ -101,8 +101,8 @@ def alignPointCloud(cargo_no):
         for j in range(1, graph_n[i]):
             point_cloud[i] = np.concatenate([point_cloud[i], raw_point_cloud[j]])
 
-    voxelGridFilter(point_cloud[0])
-    voxelGridFilter(point_cloud[1])
+    #voxelGridFilter(point_cloud[0])
+    #voxelGridFilter(point_cloud[1])
 
     theta[0][0], theta[0][1], z_level[0] = getRotateToXYPlane(plane_params[0])
     rotateAroundX(point_cloud[0], theta[0][0])
