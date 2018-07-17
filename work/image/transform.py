@@ -29,9 +29,40 @@ def depthToPointCloudWithDownSample(device, depth, mask, d):
     for i in range(depth.height):
         for j in range(depth.width):
             if mask[i][j] == True and (i + j) % d == 0:
-                pos = list(device.registration.getPointXYZ(depth, i, j))
-                if (not np.isnan(pos[0])) and (pos[0] ** 2 + pos[1] ** 2 + pos[2] ** 2 <= 2.2):
-                    points.append(pos)
+                try:
+                    state = True
+                    for ii in range(5):
+                        for jj in range(5):
+                            state = state and mask[i + ii - 2][j + jj - 2]
+                    if state:
+                        pos = list(device.registration.getPointXYZ(depth, i, j))
+                        if (not np.isnan(pos[0])) and (pos[0] ** 2 + pos[1] ** 2 + pos[2] ** 2 <= 2.2):
+                            points.append(pos)
+                except:
+                    pass
+
+    return points
+
+def depthToPointCloudWithDownSampleAndPlane(device, depth, mask, d, plane):
+    points = []
+    tmp_scale = np.sqrt(plane[0] ** 2 + plane[1] ** 2 + 1)
+    for i in range(depth.height):
+        for j in range(depth.width):
+            if mask[i][j] == True and (i + j) % d == 0:
+                try:
+                    state = True
+                    for ii in range(11):
+                        for jj in range(11):
+                            state = state and mask[i + ii - 5][j + jj - 5]
+                    if state:
+                        pos = list(device.registration.getPointXYZ(depth, i, j))
+                        if (not np.isnan(pos[0])) and (pos[0] ** 2 + pos[1] ** 2 + pos[2] ** 2 <= 2.2):
+                            dist = (pos[0] * plane[0] + pos[1] * plane[1] - (pos[2] - plane[2])) / tmp_scale
+                            if abs(dist) > 0.05:
+                                points.append(pos)
+                except:
+                    pass
+
     return points
 
 def depthToPointCloudWithMask(device, depth, mask):

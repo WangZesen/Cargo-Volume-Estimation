@@ -41,14 +41,35 @@ def pointCloudToFile(points, frame_no):
             str_points = [str(j) for j in points[i]]
             f.write(','.join(str_points) + '\n')
 
-def checkDetectPoint(diff, sensor):
+def checkDetectPointWithPlane(diff, sensor, plane, depth, device):
     state = 0
+
     for k in range(len(sensor)):
         cur_state = 1
+        max_diff = 0
         for i in range(3):
             for j in range(3):
+                max_diff = max(max_diff, diff[sensor[k][0] + i - 1][sensor[k][0] + j - 1])
                 if diff[sensor[k][0] + i - 1][sensor[k][0] + j - 1] <= 0.005:
                     cur_state = 0
+        # if cur_state == 1:
+
+        state = state | cur_state
+    return state
+
+def checkDetectPoint(diff, sensor):
+    state = 0
+
+    for k in range(len(sensor)):
+        cur_state = 1
+        max_diff = 0
+        for i in range(3):
+            for j in range(3):
+                max_diff = max(max_diff, diff[sensor[k][1] + i - 1][sensor[k][0] + j - 1])
+                if diff[sensor[k][1] + i - 1][sensor[k][0] + j - 1] <= 0.005 or diff[sensor[k][1] + i - 1][sensor[k][0] + j - 1] > 0.2:
+                    cur_state = 0
+        if cur_state == 1:
+            print max_diff
         state = state | cur_state
     return state
 
@@ -138,6 +159,16 @@ if __name__ == '__main__':
     detect_region = detectConfig.detect_region[device_tag]
     detect_point = detectConfig.detect_point[device_tag]
 
+    bg_points = []
+    for i in range(len(detect_point[0])):
+        bg_points.append(transform.depthToPoint(device, depth, detect_point[0][i][0], detect_point[0][i][1]))
+        bg_points.append(transform.depthToPoint(device, depth, detect_point[1][i][0], detect_point[1][i][1]))
+    bg_plane = fit.fitPlane(bg_points)
+    # tmp_scale = np.sqrt(bg_plane[0] ** 2 + bg_plane[1] ** 2 + 1)
+    # bg_plane = bg_plane / tmp_scale
+
+    print (bg_plane)
+
     # Create State Machine
     state_machine = stateMachine.Machine()
 
@@ -172,11 +203,13 @@ if __name__ == '__main__':
         # Denoise Depth Image and IR Image
         i_ir = transform.grayToThreeChannels(i_ir)
         i_depth_blur = filter.smoothFrame(i_depth)
+        cv2.imshow('i_depth', i_depth)
         i_ir_blur = filter.smoothFrame(i_ir)
 
         '''
         # Get and Save Transformed Point Cloud
-        points = transform.depthToPointCloudWithMask(device, depth, diff > 0.005)
+        points = np.array(transform.depthToPointCloudWithMask(device, depth, np.logical_and(diff > 0.005, diff < 0.2)))
+        print (points.shape)
         np.save('Save_Point_Cloud/pc_{}.npy'.format(str(frame_no).zfill(4)), points)
         pointCloudToFile(points, frame_no)
         '''
@@ -197,7 +230,7 @@ if __name__ == '__main__':
             valid_feature = []
             surface_points = []
         elif state_machine.cur_state == 'on': # on: record image
-            points = transform.depthToPointCloudWithDownSample(device, depth, diff > 0.005, 4)
+            points = transform.depthToPointCloudWithDownSampleAndPlane(device, depth, np.logical_and(diff > 0.005, diff < 0.2), 4, bg_plane)
             valid_point_clouds.append(points)
 
             feature_2d = locate.findFeaturePoint(i_ir_blur, device_tag)
@@ -223,9 +256,12 @@ if __name__ == '__main__':
             print ('total point N: {}'.format(total_n))
             pointCloudToFileNumpy(valid_point_clouds[0], 0, device_tag, recv_cargo)
             for i in range(1, valid_count):
-                offset = locate.calOffset(valid_feature[0], valid_feature[i], direction)
-                valid_point_clouds[i] += offset
-                pointCloudToFileNumpy(valid_point_clouds[i], i, device_tag, recv_cargo)
+                if valid_point_clouds[i].shape[0] > 0:
+                    offset = locate.calOffset(valid_feature[0], valid_feature[i], direction)
+                    valid_point_clouds[i] += offset
+                    pointCloudToFileNumpy(valid_point_clouds[i], i, device_tag, recv_cargo)
+                else:
+                    valid_point_clouds[i] = np.zeros((0, 3))
 
             saveFinalPointCloud(valid_point_clouds, 0, device_tag, recv_cargo)
 
@@ -238,6 +274,7 @@ if __name__ == '__main__':
                     f.write('{}, {}, {}\n'.format(direction[0], direction[1], direction[2]))
                     f.write('{}, {}, {}\n'.format(strip_direction[0], strip_direction[1], strip_direction[2]))
                     f.write('{}, {}, {}\n'.format(valid_feature[0][0], valid_feature[0][1], valid_feature[0][2]))
+                '''
                 try:
                     socket_client('Save_Point_Cloud/0/{}_pc_offset.npy'.format(str(recv_cargo).zfill(3), str(i).zfill(4)))
                 except:
@@ -246,6 +283,7 @@ if __name__ == '__main__':
                     socket_client('Save_Point_Cloud/0/{}_log.txt'.format(str(recv_cargo).zfill(3)))
                 except:
                     pass
+                '''
             else:
                 with open('Save_Point_Cloud/1/{}_log.txt'.format(str(recv_cargo).zfill(3)), 'w') as f:
                     f.write(str(recv_cargo) + '\n')
