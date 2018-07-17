@@ -67,7 +67,7 @@ def rotatePoint(point, theta1, theta2):
     point[0], point[2] = point[2] * math.sin(theta2) + point[0] * math.cos(theta2), point[2] * math.cos(theta2) - point[0] * math.sin(theta2)
 
 def alignPointCloud(cargo_no):
-    strip_length = 0.30
+    strip_length = 0.505
 
     point_cloud = [None, None]
     features = [None, None]
@@ -97,8 +97,12 @@ def alignPointCloud(cargo_no):
         raw_point_cloud = np.load('./../Save_Point_Cloud/{}/{}_pc_offset.npy'.format(i, str(cargo_no).zfill(3)))
 
         point_cloud[i] = raw_point_cloud[0]
+        if raw_point_cloud[0].shape[0] == 0:
+            point_cloud[i] = np.zeros((0, 3))
 
         for j in range(1, graph_n[i]):
+            if raw_point_cloud[j].shape[0] == 0:
+                continue
             point_cloud[i] = np.concatenate([point_cloud[i], raw_point_cloud[j]])
 
     #voxelGridFilter(point_cloud[0])
