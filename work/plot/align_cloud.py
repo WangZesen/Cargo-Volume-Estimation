@@ -1,7 +1,29 @@
 import numpy as np
 import math
+import scipy.io as sio
 import scipy.spatial as spatial
 
+def voxelGridFilter(points):
+    part = 110
+    grid = [[[[] for i in range(part)] for j in range(part)] for k in range(part)]
+    xmin = -1.3
+    xmax = 1.3
+    ymin = -1
+    ymax = 1
+    zmin = 0.5
+    zmax = 1.8
+
+    for i in range(points.shape[0]):
+        x_grid = int((points[i][0] - xmin) / (xmax - xmin) * part)
+        y_grid = int((points[i][1] - ymin) / (ymax - ymin) * part)
+        z_grid = int((points[i][2] - zmin) / (zmax - zmin) * part)
+        grid[x_grid][y_grid][z_grid].append(i)
+
+    for i in range(part):
+        for j in range(part):
+            for k in range(part):
+                if not (len(grid[i][j][k]) == 0):
+                    points[np.array(grid[i][j][k]), :] = np.mean(points[np.array(grid[i][j][k]), :], axis = 0)
 
 def getRotateToXYPlane(plane_params):
     new_plane_params = [plane_params[0], plane_params[1], plane_params[2]]
@@ -45,7 +67,7 @@ def rotatePoint(point, theta1, theta2):
     point[0], point[2] = point[2] * math.sin(theta2) + point[0] * math.cos(theta2), point[2] * math.cos(theta2) - point[0] * math.sin(theta2)
 
 def alignPointCloud(cargo_no):
-    strip_length = 0.27
+    strip_length = 0.30
 
     point_cloud = [None, None]
     features = [None, None]
@@ -78,6 +100,9 @@ def alignPointCloud(cargo_no):
 
         for j in range(1, graph_n[i]):
             point_cloud[i] = np.concatenate([point_cloud[i], raw_point_cloud[j]])
+
+    voxelGridFilter(point_cloud[0])
+    voxelGridFilter(point_cloud[1])
 
     theta[0][0], theta[0][1], z_level[0] = getRotateToXYPlane(plane_params[0])
     rotateAroundX(point_cloud[0], theta[0][0])
@@ -137,10 +162,9 @@ def alignPointCloud(cargo_no):
     return filtered_point_cloud
 
 if __name__ == '__main__':
-
     points = alignPointCloud(0)
 
     print (points.shape)
-    
-    import scipy.io as sio
+
     sio.savemat('tmp/final.mat', {'matrix1': points})
+    np.save('tmp/final.npy', points)
