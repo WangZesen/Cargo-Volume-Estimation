@@ -75,7 +75,7 @@ def checkDetectPoint(diff, sensor):
 def socket_client(filepath):
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.connect(('192.168.1.102', 6666))
+        s.connect(('192.168.1.100', 6666))
         # s.connect(('127.0.0.1', 6666))
     except socket.error as msg:
         print (msg)
