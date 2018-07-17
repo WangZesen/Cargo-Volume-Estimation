@@ -50,23 +50,25 @@ def rotate_vector2D(vector2D, rot_rad):
 
 
 def shape_detect_v2(data3D):
-    X_mean = np.mean(data3D[:, 0])
-    Y_mean = np.mean(data3D[:, 1])
-    Z_mean = np.mean(data3D[:, 2])
-    meanXY = np.array([X_mean, Y_mean])
+    # X_mean = np.mean(data3D[:, 0])
+    # Y_mean = np.mean(data3D[:, 1])
+    # Z_mean = np.mean(data3D[:, 2])
+    # meanXY = np.array([X_mean, Y_mean])
     widthVec = np.array([0, -1])
     tmpVec = np.array([0, -1])
 
     n = 6
-    min_rad = pi/n
+    min_rad = pi/n          # 30 deg
     length = None
     for i in range(n):
         len_max = None
-        #print find_rad(tmpVec) * (180 / pi)
+        # print find_rad(tmpVec) * (180 / pi),
         for point in data3D:
-            len_val = np.dot(point[0:2]-meanXY, tmpVec)
+            # len_val = np.dot(point[0:2]-meanXY, tmpVec)
+            len_val = np.dot(point[0:2], tmpVec)
             if not len_max or len_val>len_max:
                 len_max = len_val
+        # print len_max
         if not length or len_max<length:
             startVec = tmpVec
             length = len_max
@@ -74,15 +76,17 @@ def shape_detect_v2(data3D):
 
     tmpVec = rotate_vector2D(startVec, -min_rad)
     n = 36
-    min_rad = pi / n
+    min_rad = pi / n        # 5 deg
     length = None
-    for i in range(int(2*(n/12))+1):
+    for i in range(int(2*(n/6))+1):
         len_max = None
-        #print find_rad(tmpVec) * (180 / pi)
+        # print find_rad(tmpVec) * (180 / pi),
         for point in data3D:
-            len_val = np.dot(point[0:2] - meanXY, tmpVec)
+            # len_val = np.dot(point[0:2] - meanXY, tmpVec)
+            len_val = np.dot(point[0:2], tmpVec)
             if not len_max or len_val > len_max:
                 len_max = len_val
+        # print len_max
         if not length or len_max < length:
             startVec = tmpVec
             length = len_max
@@ -94,17 +98,19 @@ def shape_detect_v2(data3D):
     length = None
     for i in range(int(2 * (n / 36)) + 1):
         len_max = None
-        #print find_rad(tmpVec) * (180 / pi)
+        # print find_rad(tmpVec) * (180 / pi),
         for point in data3D:
-            len_val = np.dot(point[0:2] - meanXY, tmpVec)
+            # len_val = np.dot(point[0:2] - meanXY, tmpVec)
+            len_val = np.dot(point[0:2], tmpVec)
             if not len_max or len_val > len_max:
                 len_max = len_val
+        # print len_max
         if not length or len_max < length:
             widthVec = tmpVec
             length = len_max
         tmpVec = rotate_vector2D(tmpVec, min_rad)
-    
-    print find_rad(tmpVec) * (180 / pi)
+
+    # print find_rad(widthVec) * (180 / pi)
     lengthVec = np.array([-widthVec[1], widthVec[0]])
 
     return lengthVec, widthVec
@@ -134,7 +140,7 @@ def cubic_construct(data3D, lengthVec, widthVec):
             z_range[0] = height_val
         if not z_range[1] or z_range[1]<height_val:
             z_range[1] = height_val
-
+    z_range[0] -= 0.02
     out_points = np.zeros([8, 3])
     count = 0
 

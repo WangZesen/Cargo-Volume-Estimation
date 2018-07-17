@@ -96,6 +96,7 @@ if __name__ == '__main__':
         count_cargo = 0
         while True:
             #cam.zoom(1)
+            mlab.view(180, 180)
             
             for device in range(2):
                 reset_Range(plt_pointCloud)
@@ -116,7 +117,7 @@ if __name__ == '__main__':
                         yield
                     ##mlab.savefig('./figure/f_'+str(idx).zfill(3)+'_'+str(device)+'_'+str(j).zfill(4)+'.png')
                 #print "pending ..."
-                time.sleep(1)
+                time.sleep(0.5)
                 yield
                 text.remove()
                 
@@ -133,6 +134,8 @@ if __name__ == '__main__':
             x, y, z = np.transpose(final_points)
             triangles = convex_hull.visualize_mayavi_output(final_points, facets)
             plt_triangular_mesh = mlab.triangular_mesh(x, y, z, triangles, scalars=z)
+            # plt_pointCloud.mlab_source.reset(x=x, y=y, z=z, scalars=-y)
+
             # yield
             # fig.scene.reset_zoom()
 
@@ -148,6 +151,7 @@ if __name__ == '__main__':
 
             x, y, z = np.transpose(out_points)
             plt_cubic = mlab.triangular_mesh(x, y, z, triangles, scalars=z, representation='wireframe')
+            mlab.view(90, 45)
             fig.scene.reset_zoom()
 
             yield

@@ -115,7 +115,7 @@ def deleteFacets(points, facets, conn, facet_n, n, d):
 
 def ConstructConvexHull(points):
     np.random.shuffle(points)
-    points = points[0:700, :]
+    points = points[0:500, :]
     points = points - np.mean(points, axis = 0)
     flag = [True for i in range(points.shape[0])]
     facets = []
