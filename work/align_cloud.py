@@ -3,6 +3,27 @@ import math
 import scipy.io as sio
 import scipy.spatial as spatial
 
+def voxelGridFilter(points):
+    part = 110
+    grid = [[[[] for i in range(part)] for j in range(part)] for k in range(part)]
+    xmin = -1.3
+    xmax = 1.3
+    ymin = -1
+    ymax = 1
+    zmin = 0.5
+    zmax = 1.8
+
+    for i in range(points.shape[0]):
+        x_grid = int((points[i][0] - xmin) / (xmax - xmin) * part)
+        y_grid = int((points[i][1] - ymin) / (ymax - ymin) * part)
+        z_grid = int((points[i][2] - zmin) / (zmax - zmin) * part)
+        grid[x_grid][y_grid][z_grid].append(i)
+
+    for i in range(part):
+        for j in range(part):
+            for k in range(part):
+                if not (len(grid[i][j][k]) == 0):
+                    points[np.array(grid[i][j][k]), :] = np.mean(points[np.array(grid[i][j][k]), :], axis = 0)
 
 def getRotateToXYPlane(plane_params):
     new_plane_params = [plane_params[0], plane_params[1], plane_params[2]]
@@ -46,7 +67,7 @@ def rotatePoint(point, theta1, theta2):
     point[0], point[2] = point[2] * math.sin(theta2) + point[0] * math.cos(theta2), point[2] * math.cos(theta2) - point[0] * math.sin(theta2)
 
 def alignPointCloud(cargo_no):
-    strip_length = 0.30
+    strip_length = 0.4
 
     point_cloud = [None, None]
     features = [None, None]
@@ -57,7 +78,7 @@ def alignPointCloud(cargo_no):
     graph_n = [None, None]
 
     for i in range(2):
-        # point_cloud.append(read_point_cloud(i, cargo_no, 0))
+
 
         f = open('Save_Point_Cloud/{}/{}_log.txt'.format(i, str(cargo_no).zfill(3)), 'r')
 
@@ -79,6 +100,11 @@ def alignPointCloud(cargo_no):
 
         for j in range(1, graph_n[i]):
             point_cloud[i] = np.concatenate([point_cloud[i], raw_point_cloud[j]])
+    # return point_cloud[0]
+    # voxelGridFilter(point_cloud[0])
+    # voxelGridFilter(point_cloud[1])
+
+
 
     theta[0][0], theta[0][1], z_level[0] = getRotateToXYPlane(plane_params[0])
     rotateAroundX(point_cloud[0], theta[0][0])
@@ -134,12 +160,27 @@ def alignPointCloud(cargo_no):
             mean_dist = (mean_dist * i + dist[arg[i]]) / (i + 1)
             filtered_point_cloud.append(final_point_cloud[arg[i]])
     filtered_point_cloud = np.array(filtered_point_cloud)
+
+    def dot_prod(x, y):
+        return np.sum(np.multiply(x, y))
+
+    slice_n = 15
+    for i in range(slice_n):
+        dir = np.array([math.sin(math.pi / slice_n * i), math.cos(math.pi / slice_n * i), 0])
+        proj = np.zeros((filtered_point_cloud.shape[0], ))
+        for j in range(filtered_point_cloud.shape[0]):
+            proj[j] = dot_prod(dir, filtered_point_cloud[j])
+        proj_arg = np.argsort(proj)
+        filtered_point_cloud = filtered_point_cloud[proj_arg[int(filtered_point_cloud.shape[0] * 0.007) : int(filtered_point_cloud.shape[0] * 0.993)], :]
+
     filtered_point_cloud = filtered_point_cloud - np.mean(filtered_point_cloud, axis = 0)
+
     return filtered_point_cloud
 
 if __name__ == '__main__':
-    points = alignPointCloud(0)
+    points = alignPointCloud(1)
 
     print (points.shape)
 
     sio.savemat('tmp/final.mat', {'matrix1': points})
+    np.save('tmp/final.npy', points)
