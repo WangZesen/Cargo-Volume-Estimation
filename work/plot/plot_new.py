@@ -181,8 +181,6 @@ class Visualization(HasTraits):
             self.display = display
         self.check_cargo_thread = CheckCargoThread(self.idx)
         # self.check_cargo_thread.idx = self.idx
-        # self.check_cargo_thread.scene = self.scene
-        # self.check_cargo_thread.plots = self.plots
         self.check_cargo_thread.wants_abort = False
         self.check_cargo_thread.start()
 
@@ -305,8 +303,8 @@ class Visualization(HasTraits):
             self.log.update('Still in Active!  Please pause first!\n')
             return
         else:
-            if self.idx[0] == 0:
-                self.log.update('Have reached the first cargo!\n')
+            if self.idx[0] == self.idx[1]-1:
+                self.log.update('Have reached the last cargo!\n')
                 return
             else:
                 self.idx[0] += 1
@@ -314,15 +312,35 @@ class Visualization(HasTraits):
         self.do_refresh_scene()
         return
 
+    def do_restart(self):
+        self.do_stop_all_threading()
+        time.sleep(1)
+        self.idx = [-1, 0]
+        self.plots = []
+        self.check_cargo_thread = CheckCargoThread(self.idx)
+        self.check_cargo_thread.wants_abort = False
+        self.check_cargo_thread.start()
+
+        self.update_scene_thread = UpdateSceneThread(self.idx)
+        self.update_scene_thread.wants_abort = False
+        self.update_scene_thread.scene = self.scene
+        self.update_scene_thread.plots = self.plots
+        self.update_scene_thread.display = self.display
+        self.update_scene_thread.log = self.log
+        self.update_scene_thread.start()
+
+        self.log.update('Threading restarted!\n')
+
 
     start_pause_update = Action(name="Start/Pause", action="do_start_pause_update")
     stop_all_threading = Action(name="Terminate", action="do_stop_all_threading")
-    prev_cargo = Action(name="Prev", action="do_prev_cargo")
-    next_cargo = Action(name="Next", action="do_next_cargo")
+    prev_cargo = Action(name="Prev Cargo", action="do_prev_cargo")
+    next_cargo = Action(name="Next Cargo", action="do_next_cargo")
     refresh_scene = Action(name="Refresh", action="do_refresh_scene")
-    prev_cargo_show = Action(name="Prev & Show", action="do_prev_cargo_show")
-    next_cargo_show = Action(name="Next & Show", action="do_next_cargo_show")
+    prev_cargo_show = Action(name="Show Prev", action="do_prev_cargo_show")
+    next_cargo_show = Action(name="Show Next", action="do_next_cargo_show")
     close_button = Action(name="Close", action="do_close")
+    restart = Action(name='Restart', action='do_restart')
 
     view = View(
         Group(
@@ -349,7 +367,7 @@ class Visualization(HasTraits):
             ),
             orientation='vertical'
         ),
-        buttons=[refresh_scene, prev_cargo, next_cargo, prev_cargo_show, next_cargo_show, start_pause_update, stop_all_threading],
+        buttons=[refresh_scene, prev_cargo, next_cargo, prev_cargo_show, next_cargo_show, start_pause_update, restart, stop_all_threading],
         )
 
     def __del__(self):
