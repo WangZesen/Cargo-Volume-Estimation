@@ -1,1 +1,41 @@
+System Environment Requirement:
+	python 2.7
+	1. Opencv 3.3.0
+	2. libfreenect2
+	3. pylibfreenect2
 
+	4. mayavi (this is only needed for computer#2)
+		Note: follow the install instruction  https://docs.enthought.com/mayavi/mayavi/installation.html
+
+
+
+Hardware Requirement:
+	1. Kinect devices (*2)
+		Note: kinect#1 is the device which will first take the photo of cargo on conveyor belt before the kinect#2.
+	2. Wifi router
+	3. Computers (*2)
+		Note: computer#1 only for data collection and sending, while computer#2 collect the data, recieve data from computer#1, combine the data, and output the 3D model to UI. Computer#1 will be connected to kinect#1, and computer#2 will be connected to kinect#2
+	4. Convel belt, with reflection tapes with fixing length
+
+
+
+How to run?
+	1. Setting Up:
+		(1) Connect 2 computers into the same wifi environment.
+			a) For computer#1, modify the "./socket/socket_send.py" file, change the ip address at line10 "s.connect(('*.*.*.*', 6666))" to the ip of computer#2
+			b) For computer#2, modify the "./socket/socket_recv.py" file, change the ip address at line13 "s.bind(('*.*.*.*', 6666))" to the ip of computer#2 itself
+		(2) Placed the kinect devices on both sides of the convey belt, connect the first kinect device to computer#1, the second kinect device to computer#2.
+			a) For computer#1, run the script "python ./work/main.py"
+			   For computer#2, run the script "python ./work/main.py device2"
+			b) Adjust the angle and position of both kinect devices, so that the blablablablablabla
+			c) Exit the both scripts (Ctrl+C). Then the angle and position of both kinect devices should not be changed, otherwise repeat the step b)
+		(3) Modify the "./work/plot/align_cloud.py" file, change the value of "strip_length"  at line70 to the real length of reflection tapes (unit: meter).
+		
+	2. Before Start:
+		(1) Make sure all the setting up have been done.
+		(2) Run "python ./socket/socket_send.py" on computer#1 and "python ./socket/socket_recv.py" on computer#2.
+		(3) Run "python ./work/main.py" on computer#1 and "python ./work/main.py device2" on computer#2.
+		(4) Run "python ./work/plot/new_plot.py" on computer#2.
+	
+	3. On Running:
+	
