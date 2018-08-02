@@ -1,4 +1,12 @@
 Cargo 1:
+
+Groundtruth:
+Length: 0.38
+Width: 0.25
+Height: 0.21
+Volume: 0.01995
+
+Test data:
 Length: 0.3966
 Width:  0.2626
 Height: 0.2059
@@ -42,6 +50,14 @@ Volume: 0.023461644015
 ----------------------------------------------------
 
 Cargo 2:
+
+Groundtruth:
+Length: 0.30
+Width: 0.122
+Height: 0.15
+Volume: 0.00549
+
+Test data:
 Length: 0.3071
 Width:  0.142
 Height: 0.1419
@@ -95,6 +111,14 @@ Volume: 0.00674897685
 ----------------------------------------------------
 
 Cargo 3:
+
+Groundtruth:
+Length: 0.285
+Width: 0.29
+Height: 0.224
+Volume: 0.0185136
+
+Test data:
 Length: 0.307
 Width:  0.2977
 Height: 0.2323
