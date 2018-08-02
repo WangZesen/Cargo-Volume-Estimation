@@ -140,7 +140,7 @@ Width:  0.3252
 Height: 0.2327
 Volume: 0.023141121432
 
-(vertical)
+(这一组是竖起来放的)
 Length: 0.2934
 Width:  0.2315
 Height: 0.2979
