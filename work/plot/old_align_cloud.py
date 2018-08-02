@@ -78,6 +78,7 @@ def alignPointCloud(cargo_no):
     graph_n = [None, None]
 
     for i in range(2):
+        # point_cloud.append(read_point_cloud(i, cargo_no, 0))
 
         f = open('./../Save_Point_Cloud/{}/{}_log.txt'.format(i, str(cargo_no).zfill(3)), 'r')
 
@@ -92,21 +93,20 @@ def alignPointCloud(cargo_no):
 
         raw_plane_params = lines[2].split(', ')
         plane_params[i] = [float(raw_plane_params[0]), float(raw_plane_params[1]), float(raw_plane_params[2])]
-        try:
-            raw_point_cloud = np.load('./../Save_Point_Cloud/{}/{}_pc_offset.npy'.format(i, str(cargo_no).zfill(3)))
-        except:
-            print "EOF Error at reading " + './../Save_Point_Cloud/{}/{}_pc_offset.npy'.format(i, str(cargo_no).zfill(3))
-            return
+
+        raw_point_cloud = np.load('./../Save_Point_Cloud/{}/{}_pc_offset.npy'.format(i, str(cargo_no).zfill(3)))
 
         point_cloud[i] = raw_point_cloud[0]
+        if raw_point_cloud[0].shape[0] == 0:
+            point_cloud[i] = np.zeros((0, 3))
 
         for j in range(1, graph_n[i]):
+            if raw_point_cloud[j].shape[0] == 0:
+                continue
             point_cloud[i] = np.concatenate([point_cloud[i], raw_point_cloud[j]])
-    # return point_cloud[0]
-    # voxelGridFilter(point_cloud[0])
-    # voxelGridFilter(point_cloud[1])
 
-
+    #voxelGridFilter(point_cloud[0])
+    #voxelGridFilter(point_cloud[1])
 
     theta[0][0], theta[0][1], z_level[0] = getRotateToXYPlane(plane_params[0])
     rotateAroundX(point_cloud[0], theta[0][0])
@@ -162,25 +162,11 @@ def alignPointCloud(cargo_no):
             mean_dist = (mean_dist * i + dist[arg[i]]) / (i + 1)
             filtered_point_cloud.append(final_point_cloud[arg[i]])
     filtered_point_cloud = np.array(filtered_point_cloud)
-
-    def dot_prod(x, y):
-        return np.sum(np.multiply(x, y))
-
-    slice_n = 15
-    for i in range(slice_n):
-        dir = np.array([math.sin(math.pi / slice_n * i), math.cos(math.pi / slice_n * i), 0])
-        proj = np.zeros((filtered_point_cloud.shape[0], ))
-        for j in range(filtered_point_cloud.shape[0]):
-            proj[j] = dot_prod(dir, filtered_point_cloud[j])
-        proj_arg = np.argsort(proj)
-        filtered_point_cloud = filtered_point_cloud[proj_arg[int(filtered_point_cloud.shape[0] * 0.007) : int(filtered_point_cloud.shape[0] * 0.993)], :]
-
     filtered_point_cloud = filtered_point_cloud - np.mean(filtered_point_cloud, axis = 0)
-
     return filtered_point_cloud
 
 if __name__ == '__main__':
-    points = alignPointCloud(1)
+    points = alignPointCloud(0)
 
     print (points.shape)
 

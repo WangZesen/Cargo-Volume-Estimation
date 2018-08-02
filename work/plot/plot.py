@@ -12,7 +12,7 @@ y0 = np.array([0])
 z0 = np.array([0])
 
 
-def readFile(device, idx):
+def read_file(device, idx):
     print "Reading ...   ",
     dict = './../Save_Point_Cloud/'+str(device)+'/'
     filename_log = dict+str(idx).zfill(3)+'_log.txt'
@@ -48,6 +48,22 @@ def readFile(device, idx):
     return data, image_num, idx
 
 
+def check_file_log(idx):            # return:  1 - file exist;   -1 - file damage, skip;   0 - file not exist
+    flag = True
+    for device in range(2):
+        dict = './../Save_Point_Cloud/' + str(device) + '/'
+        filename_log = dict + str(idx).zfill(3) + '_log.txt'
+        if not os.path.exists(filename_log):
+            if flag:
+                flag = False
+            else:
+                return 0
+    if flag:
+        return 1
+    else:
+        return -1
+
+
 def reset_Range(plt):
     x = np.array([-0.5, 0.5])
     y = np.array([-0.5, 0.5])
@@ -56,41 +72,17 @@ def reset_Range(plt):
     plt.mlab_source.reset(x=x, y=y, z=z, scalars=scalars)
 
 
-
-
-
-
 if __name__ == '__main__':
-    idx = 0
     x = np.array([-0.5, 0.5])
     y = np.array([-0.5, 0.5])
     z = np.array([0, 1])
     scalars = -y
     f = mlab.figure(size=(600,600))
     plt_pointCloud = mlab.points3d(x, y, z, scalars, colormap="RdYlBu", scale_factor=0.005, scale_mode='none', figure=f)
-    '''
-    x = np.array([0, 0])
-    y = np.array([0, 0])
-    z = np.array([0, 0])
-    pltVec = mlab.plot3d(x, y, z, line_width=1, tube_radius=None)
-    '''
-    
-    '''
-    n_mer, n_long = 6, 11
-    pi = np.pi
-    dphi = pi/1000.0
-    phi = np.arange(0.0, 2*pi + 0.5*dphi, dphi, 'd')
-    mu = phi*n_mer
-    x = np.cos(mu)*(1+np.cos(n_long*mu/n_mer)*0.5)
-    y = np.sin(mu)*(1+np.cos(n_long*mu/n_mer)*0.5)
-    z = np.sin(n_long*mu/n_mer)*0.5
-    l = mlab.plot3d(x, y, z, np.sin(mu), tube_radius=0.025, colormap='Spectral')
-    '''
-    
     fig = mlab.gcf()
     
     @mlab.animate(delay=100)
-    def anim(idx):
+    def anim_full(idx=0):
         time.sleep(2)
         yield
         count_cargo = 0
@@ -102,7 +94,7 @@ if __name__ == '__main__':
                 reset_Range(plt_pointCloud)
                 #yield
                 fig.scene.reset_zoom()
-                rawData, image_num, idx = readFile(1-device, idx)
+                rawData, image_num, idx = read_file(1-device, idx)
                 #mlab.title('device '+str(device) + '   cargo '+str(idx))
                 text = mlab.text(0.1, 0.1, 'device '+str(device) + '   cargo '+str(idx))
                 x, y, z = np.array([[],[],[]])
@@ -144,10 +136,10 @@ if __name__ == '__main__':
             #yield
             
             lengthVec, widthVec = shape.shape_detect_v2(final_points)
-            out_points, triangles = shape.cubic_construct(final_points, lengthVec, widthVec)
+            out_points, triangles, _ = shape.cubic_construct(final_points, lengthVec, widthVec)
 
             # lengthVec, widthVec = shape.shape_detect_v2(data)
-            # out_points, triangles = shape.cubic_construct(data, lengthVec, widthVec)
+            # out_points, triangles, _ = shape.cubic_construct(data, lengthVec, widthVec)
 
             x, y, z = np.transpose(out_points)
             plt_cubic = mlab.triangular_mesh(x, y, z, triangles, scalars=z, representation='wireframe')
@@ -173,10 +165,77 @@ if __name__ == '__main__':
             count_cargo += 1
             print "pass " + str(count_cargo)
 
+
+    @mlab.animate(delay=100)
+    def anim_output(idx=0):
+        plt_pointCloud.mlab_source.reset(x=x0, y=y0, z=z0, scalars=-y0)
+        count_cargo = 0
+        waiting = False
+        text = None
+        while True:
+            # cam.zoom(1)
+
+            flag = check_file_log(idx)
+            if flag == 0:
+                if not waiting:
+                    waiting = True
+                    print "Waiting for new data"
+                yield
+                continue
+            elif flag == -1:
+                print "File readIn ERROR: skip cargo "+str(idx)
+                idx += 1
+                yield
+                continue
+
+            waiting = False
+
+            if text:
+                text.remove()
+                for tt in text_size:
+                    tt.remove()
+
+                plt_triangular_mesh.remove()
+                plt_cubic.remove()
+
+            data = align_cloud.alignPointCloud(idx)
+            text = mlab.text(0.1, 0.05, 'cargo ' + str(idx), width=0.3)
+
+            final_points, facets = convex_hull.ConstructConvexHull(data)
+            x, y, z = np.transpose(final_points)
+            triangles = convex_hull.visualize_mayavi_output(final_points, facets)
+            plt_triangular_mesh = mlab.triangular_mesh(x, y, z, triangles, scalars=z)
+
+            lengthVec, widthVec = shape.shape_detect_v2(final_points)
+            out_points, triangles, size = shape.cubic_construct(final_points, lengthVec, widthVec)
+
+            x, y, z = np.transpose(out_points)
+            plt_cubic = mlab.triangular_mesh(x, y, z, triangles, scalars=z, representation='wireframe')
+            mlab.view(90, 45)
+            fig.scene.reset_zoom()
+            text_size = []
+            text_size.append(mlab.text(0.05, 0.90, 'length ' + str(round(size[0], 4)), width=0.2))
+            text_size.append(mlab.text(0.05, 0.85, 'width ' + str(round(size[1], 4)), width=0.2))
+            text_size.append(mlab.text(0.05, 0.80, 'height ' + str(round(size[2], 4)), width=0.2))
+
+            print "length " + str(size[0])
+            print "width " + str(size[1])
+            print "height " + str(size[2])
+
+            yield
+            print "pending ..."
+            for i in range(10):  # 1 sec
+                yield
+            yield
+
+            idx += 1
+            count_cargo += 1
+            print "pass " + str(count_cargo)
+
     print "Start ploting ..."
-    anim(idx)
-    mlab.view(180, 180)
+    # anim_full()
+    anim_output()
+    # mlab.view(180, 180)
     #mlab.axes()
     mlab.show(stop=True)
     #mlab.show()
-    

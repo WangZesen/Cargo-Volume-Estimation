@@ -1,10 +1,10 @@
-# import mpl_toolkits.mplot3d as a3
+#import mpl_toolkits.mplot3d as a3
 import numpy as np
 # import matplotlib.pyplot as plt
 # import matplotlib.colors as colors
 # from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 import scipy as sp
-import copy, math
+import copy
 from random import randint
 
 class Facet():
@@ -48,6 +48,9 @@ def visiblePlane(points, facet, d):
     return False
 
 def visualize(points, facets):
+    import mpl_toolkits.mplot3d as a3
+    import matplotlib.pyplot as plt
+    from mpl_toolkits.mplot3d.art3d import Poly3DCollection
     ax = a3.Axes3D(plt.figure())
     fixed_color = sp.rand(3);
     triangle = []
@@ -68,12 +71,21 @@ def visualize(points, facets):
     ax.set_xlabel("X axis")
     ax.set_ylabel("Y axis")
     ax.set_zlabel("Z axis")
-
-    ax.set_xlim3d(-0.15, 0.15)
-    ax.set_ylim3d(-0.15, 0.15)
-    ax.set_zlim3d(-0.15, 0.15)
-
+    '''
+    ax.set_xlim3d(-2, 2)
+    ax.set_ylim3d(-2, 2)
+    ax.set_zlim3d(-2, 2)
+    '''
     plt.show()
+
+
+# def visualize_mayavi_output(points, facets):
+#     triangles = []
+#     for k in range(len(facets)):
+#         if facets[k].flag:
+#             triangles.append((facets[k].a, facets[k].b, facets[k].c))
+#     return triangles
+
 
 def deleteFacets(points, facets, conn, facet_n, n, d):
     facets[n].flag = False
@@ -101,64 +113,9 @@ def deleteFacets(points, facets, conn, facet_n, n, d):
             facets.append(new_facet)
     return facet_n
 
-def convexHull2D(_points):
-
-    points = _points[:, 0:2]
-
-    n = points.shape[0]
-
-    hull = [np.argmin(points[:, 1])]
-
-    def dist(x, y):
-        return np.sqrt(np.sum(np.multiply(x - y, x - y)))
-
-    def calAngle(x, y):
-        cos_v = (y[0] - x[0]) / dist(x, y)
-        return math.acos(cos_v)
-
-        return 1e10
-
-    def cross_prod(x, y, z):
-        return np.cross(y - x, z - x) < 0
-
-    angles = []
-    for i in range(n):
-        if i != hull[0]:
-            angles.append(calAngle(points[hull[0]], points[i]))
-        else:
-            angles.append(1e10)
-    angles_arg = np.argsort(angles)
-
-    hull.append(angles_arg[0])
-
-    for i in range(1, n):
-
-        if angles[angles_arg[i]] < 1e5:
-            top = len(hull) - 1
-
-            while cross_prod(points[hull[top - 1]], points[hull[top]], points[angles_arg[i]]):
-                # print (hull)
-                hull.pop()
-                # print (hull, '!')
-                top -= 1
-            hull.append(angles_arg[i])
-    hull = np.array(hull)
-    return _points[hull, :]
-
-
-
 def ConstructConvexHull(points):
     np.random.shuffle(points)
-
-    conv_points = convexHull2D(points)
-    print (points.shape)
-
-
-    if conv_points.shape[0] <= 500:
-        points = np.vstack([conv_points, points[0:500 - conv_points.shape[0], :]])
-    else:
-        np.random.shuffle(conv_points)
-        points = conv_points[0:500, :]
+    points = points[0:500, :]
     points = points - np.mean(points, axis = 0)
     flag = [True for i in range(points.shape[0])]
     facets = []
