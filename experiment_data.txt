@@ -1,0 +1,147 @@
+Cargo 1:
+Length: 0.3966
+Width:  0.2626
+Height: 0.2059
+Volume: 0.021443900244
+
+Length: 0.3841
+Width:  0.2673
+Height: 0.2243
+Volume: 0.023028865299
+
+Length: 0.4001
+Width:  0.272
+Height: 0.2336
+Volume: 0.02542203392
+
+Length: 0.3957
+Width:  0.2728
+Height: 0.2135
+Volume: 0.02304667596
+
+Length: 0.3899
+Width:  0.2731
+Height: 0.2094
+Volume: 0.022297265886
+
+Length: 0.3949
+Width:  0.2743
+Height: 0.2113
+Volume: 0.022888242091
+
+Length: 0.3806
+Width:  0.2894
+Height: 0.2261
+Volume: 0.024903929204
+
+Length: 0.3797
+Width:  0.2745
+Height: 0.2251
+Volume: 0.023461644015
+
+----------------------------------------------------
+
+Cargo 2:
+Length: 0.3071
+Width:  0.142
+Height: 0.1419
+Volume: 0.00618800358
+
+Length: 0.3067
+Width:  0.1531
+Height: 0.158
+Volume: 0.00741901166
+
+Length: 0.3016
+Width:  0.1333
+Height: 0.1403
+Volume: 0.005640520184
+
+Length: 0.3087
+Width:  0.1406
+Height: 0.1455
+Volume: 0.00631516851
+
+Length: 0.303
+Width:  0.1451
+Height: 0.1657
+Volume: 0.00728505021
+
+Length: 0.2974
+Width:  0.1551
+Height: 0.1436
+Volume: 0.006623799864
+
+Length: 0.3031
+Width:  0.1644
+Height: 0.1519
+Volume: 0.007569122316
+
+Length: 0.3084
+Width:  0.1361
+Height: 0.1514
+Volume: 0.006354748536
+
+Length: 0.3058
+Width:  0.1355
+Height: 0.1521
+Volume: 0.00630240039
+
+Length: 0.301
+Width:  0.1397
+Height: 0.1605
+Volume: 0.00674897685
+
+----------------------------------------------------
+
+Cargo 3:
+Length: 0.307
+Width:  0.2977
+Height: 0.2323
+Volume: 0.02123080297
+
+Length: 0.3041
+Width:  0.2909
+Height: 0.2194
+Volume: 0.019408714186
+
+Length: 0.3089
+Width:  0.2837
+Height: 0.2248
+Volume: 0.019700332264
+
+Length: 0.3005
+Width:  0.3185
+Height: 0.2501
+Volume: 0.023936883425
+
+Length: 0.2995
+Width:  0.2942
+Height: 0.2285
+Volume: 0.02013379765
+
+Length: 0.3203
+Width:  0.3026
+Height: 0.2282
+Volume: 0.022117778396
+
+Length: 0.3189
+Width:  0.3075
+Height: 0.2293
+Volume: 0.022485559275
+
+Length: 0.305
+Width:  0.3233
+Height: 0.2372
+Volume: 0.0233894618
+
+Length: 0.3058
+Width:  0.3252
+Height: 0.2327
+Volume: 0.023141121432
+
+(vertical)
+Length: 0.2934
+Width:  0.2315
+Height: 0.2979
+Volume: 0.02023399359
