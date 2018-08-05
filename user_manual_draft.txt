@@ -5,7 +5,9 @@ System Environment Requirement:
 	3. pylibfreenect2
 
 	4. mayavi (this is only needed for computer#2)
-		Note: follow the install instruction  https://docs.enthought.com/mayavi/mayavi/installation.html
+		Note: follow the installation instruction  https://docs.enthought.com/mayavi/mayavi/installation.html
+	5. traitsui (this is only needed for computer#2)
+		Note: follow the installation instruction http://docs.enthought.com/traitsui/#installation
 
 
 
