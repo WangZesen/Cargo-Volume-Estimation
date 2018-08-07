@@ -5,15 +5,13 @@ Capstone Design
 
 Estimate Cargo Volume using Kinect under the environment of conveyor belt
 
+## Sponsor
+
+Panasonic
+
 ## Environment Setting
 
-1. Opencv 3.3.0
-2. libfreenect2
-3. pylibfreenect2
-Detail: https://docs.google.com/document/d/1G0t_qg3npnhR9EYVWwBvk8fxgYTYJX08fPgjS-Lj6YI/edit?usp=sharing
-
-4. mayavi
-Detail: https://docs.enthought.com/mayavi/mayavi/installation.html
+Refer to user manual.
 
 ## Todo:
 - [x] 深度图降噪
@@ -25,14 +23,8 @@ Detail: https://docs.enthought.com/mayavi/mayavi/installation.html
 - [x] 双相机产生的两个点云合并
 - [x] 需要一个Python的高效实时显示点云的库 (mayavi, moviepy可用,但需要Python3)
 - [x] 3维凸包
-- [ ] 转化成模型文件
+- [x] 长宽高判断
 
 ## Run:
 
-<pre><code>cd work
-sudo python main.py
-</code></pre>
-
-## Data
-
-Point Cloud Sample Data: https://jbox.sjtu.edu.cn/l/b1kxkP
+Refer to user manual.
