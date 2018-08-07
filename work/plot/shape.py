@@ -167,4 +167,4 @@ def cubic_construct(data3D, lengthVec, widthVec):
     width = y_range[1] - y_range[0]
     height = z_range[1] - z_range[0]
 
-    return out_points, triangles, [length, width, height]
+    return out_points, triangles, [length-0.005, width-0.005, height]

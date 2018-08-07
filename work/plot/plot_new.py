@@ -44,19 +44,20 @@ def visualize_mayavi_output(points, facets):
 
 # return [plt_triangular_mesh, plt_cubic]
 def my_plot(plots, scene, idx):
+    t_s = time.time()
     data = align_cloud.alignPointCloud(idx)
-    final_points, facets = convex_hull.ConstructConvexHull(data)
+    # print '  align ' + str(time.time()-t_s),
+    t_s = time.time()
+    final_points, facets = old_convex_hull.ConstructConvexHull(data)
+    # print ' convex ' + str(time.time() - t_s),
+    t_s = time.time()
     x0, y0, z0 = np.transpose(final_points)
     triangles0 = visualize_mayavi_output(final_points, facets)
-    lengthVec, widthVec = shape.shape_detect_v2(final_points)
+    lengthVec, widthVec = shape.shape_detect_v2(data)
     out_points, triangles1, size = shape.cubic_construct(final_points, lengthVec, widthVec)
     x1, y1, z1 = np.transpose(out_points)
+    # print ' shape ' + str(time.time() - t_s)
 
-    # to plot with old stuff
-    # data = old_align_cloud.alignPointCloud(idx)
-    # final_points, facets = old_convex_hull.ConstructConvexHull(data)
-    # x0, y0, z0 = np.transpose(final_points)
-    # triangles0 = visualize_mayavi_output(final_points, facets)
     scene.mlab.clf()
     plt_triangular_mesh = scene.mlab.triangular_mesh(x0, y0, z0, triangles0, scalars=z0)
     plt_cubic = scene.mlab.triangular_mesh(x1, y1, z1, triangles1, scalars=z1, representation='wireframe')
@@ -77,7 +78,7 @@ class LogDisplay(HasTraits):
     view = View(Item('string', show_label=False, springy=True, style='custom'))
 
     def update(self, str):
-        self.string = str + '--------------------\n' + self.history
+        self.string = str + '----------------------------------------\n' + self.history
         self.history = str + self.history
 
 
@@ -97,13 +98,13 @@ class CheckCargoThread(Thread):
         while not self.wants_abort:
             check_res = check_file_log(self.idx[1])
             if check_res==1:
-                print "  Cargo " + str(self.idx[1]) + " checked"
-                # time.sleep(0.2)
+                print "  Cargo " + str(self.idx[1]+1) + " checked"
                 self.idx[1] += 1
             elif check_res == -1:
-                print "  Cargo " + str(self.idx[1]) + " file ERROR! Skipped"
+                print "  Cargo " + str(self.idx[1]+1) + " file ERROR! Skipped"
                 self.idx[1] += 1
             time.sleep(.5)
+            # time.sleep(3.5)
         print "End checking"
 
 
@@ -114,50 +115,46 @@ class UpdateSceneThread(Thread):
 
     def run(self):
         while not self.wants_abort:
-            time.sleep(.5)
+            time.sleep(.1)
             if self.idx[1] == 0:
                 continue
             if self.idx[0] != self.idx[1] - 1:
                 self.idx[0] = self.idx[1] - 1
                 if check_file_log(self.idx[0]) == -1:
-                    self.log.update('Cargo ' + str(self.idx[0]) + ' file ERROR! Skipped\n')
+                    self.log.update('Cargo ' + str(self.idx[0]+1) + ' file ERROR! Skipped\n')
                     continue
-                self.log.string = 'Cargo ' + str(
-                    self.idx[0]) + ' ploting ...\n----------------------------------------\n' + self.log.history
+                self.log.string = 'Cargo ' + str(self.idx[0]+1)\
+                                  + ' ploting ...\n----------------------------------------\n' + self.log.history
                 self.plots, size = my_plot(self.plots, self.scene, self.idx[0])
                 # print str(round(size[0], 4))
                 # print str(round(size[1], 4))
                 # print str(round(size[2], 4))
                 volume = round(size[0], 4) * round(size[1], 4) * round(size[2], 4)
-                self.display.string = 'Cargo ' + str(self.idx[0]) + \
+                self.display.string = 'Cargo ' + str(self.idx[0]+1) + \
                                     '\nLength: '+ str(round(size[0], 4)) + \
                                     '\nWidth:  '+ str(round(size[1], 4)) + \
                                     '\nHeight: '+ str(round(size[2], 4)) + \
                                     '\nVolume: ' + str(volume) + '\n'
-                self.log.update('Cargo ' + str(self.idx[0]) + ' ploting ...  Finished!\n')
+                self.log.update('Cargo ' + str(self.idx[0]+1) + ' ploting ...  Finished!\n')
+                # print self.display.string,
             else:
                 pass
-        # self.idx[0] = self.idx[1] - 1
 
     def updateOne(self):
         if check_file_log(self.idx[0]) == -1:
-            self.log.update('Cargo ' + str(self.idx[0]) + 'file ERROR! Skipped\n')
+            self.log.update('Cargo ' + str(self.idx[0]+1) + 'file ERROR! Skipped\n')
             return
         # self.update_display('Cargo ' + str(self.idx[0]) + ' ploting ...\n')
-        self.log.string = 'Cargo ' + str(self.idx[0]) + ' ploting ...\n' + self.log.history
+        self.log.string = 'Cargo ' + str(self.idx[0]+1) + ' ploting ...\n' + self.log.history
         self.plots, size = my_plot(self.plots, self.scene, self.idx[0])
         volume = round(size[0], 4) * round(size[1], 4) * round(size[2], 4)
-        self.display.string = 'Cargo ' + str(self.idx[0]) + " (" + str(self.idx[1]-1) + ")" + \
+        self.display.string = 'Cargo ' + str(self.idx[0]+1) + " (" + str(self.idx[1]) + ")" + \
                               '\nLength: ' + str(round(size[0], 4)) + \
                               '\nWidth:  ' + str(round(size[1], 4)) + \
                               '\nHeight: ' + str(round(size[2], 4)) + \
                               '\nVolume: ' + str(volume) + '\n'
-        self.log.update('Cargo ' + str(self.idx[0]) + ' ploting ...  Finished!\n')
-
-
-# class UpdateDisplayThread(Thread):
-#     def run(self):
-#         self.display.string = self.text
+        self.log.update('Cargo ' + str(self.idx[0]+1) + ' ploting ...  Finished!\n')
+        # print self.display.string,
 
 
 class Visualization(HasTraits):
@@ -193,22 +190,6 @@ class Visualization(HasTraits):
         self.update_scene_thread.start()
         # self.active_update = True
 
-
-    # def update_scene(self):
-    #     if check_file_log(self.idx[0]) == -1:
-    #         self.log.string = 'Cargo ' + str(self.idx[0]) + 'file ERROR! Skipped\n' + self.log.string
-    #         return
-    #     # self.update_display('Cargo ' + str(self.idx[0]) + ' ploting ...\n')
-    #     str_tmp = self.log.string
-    #     self.log.string = 'Cargo ' + str(self.idx[0]) + ' ploting ...\n' + str_tmp
-    #     self.update_scene_thread.plots, size = my_plot(self.update_scene_thread.plots, self.scene, self.idx[0])
-    #     volume = round(size[0], 4) * round(size[1], 4) * round(size[2], 4)
-    #     self.display.string = 'Cargo ' + str(self.idx[0]) + " (" + str(self.idx[1]-1) + ")" + \
-    #                           '\nLength: ' + str(round(size[0], 4)) + \
-    #                           '\nWidth:  ' + str(round(size[1], 4)) + \
-    #                           '\nHeight: ' + str(round(size[2], 4)) + \
-    #                           '\nVolume: ' + str(volume) + '\n'
-    #     self.log.string = 'Cargo ' + str(self.idx[0]) + ' ploting ...  Finished!\n' + str_tmp
 
     def do_start_pause_update(self):
         if self.check_cargo_thread and not self.check_cargo_thread.isAlive():
@@ -248,7 +229,7 @@ class Visualization(HasTraits):
             else:
                 self.idx[0] -= 1
         # self.update_scene()
-        self.log.update('Change to Cargo ' + str(self.idx[0]) + " (" + str(
+        self.log.update('Change to Cargo ' + str(self.idx[0]+1) + " (" + str(
             self.idx[1]-1) + "). \nClick 'Refresh' to start plot\n")
         # self.update_scene_thread.updateOne()
         return
@@ -266,7 +247,7 @@ class Visualization(HasTraits):
             else:
                 self.idx[0] += 1
         # self.update_scene()
-        self.log.update('Change to Cargo ' + str(self.idx[0]) + " (" + str(
+        self.log.update('Change to Cargo ' + str(self.idx[0]+1) + " (" + str(
             self.idx[1] - 1) + "). \nClick 'Refresh' to start plot\n")
         # self.update_scene_thread.updateOne()
         return
@@ -330,6 +311,9 @@ class Visualization(HasTraits):
         self.update_scene_thread.start()
 
         self.log.update('Threading restarted!\n')
+
+    def do_close(self):
+        self.do_stop_all_threading()
 
 
     start_pause_update = Action(name="Start/Pause", action="do_start_pause_update")

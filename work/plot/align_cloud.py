@@ -2,6 +2,7 @@ import numpy as np
 import math
 import scipy.io as sio
 import scipy.spatial as spatial
+import random
 
 def voxelGridFilter(points):
     part = 110
@@ -68,6 +69,7 @@ def rotatePoint(point, theta1, theta2):
 
 def alignPointCloud(cargo_no):
     strip_length = 0.4
+    max_points = 1000
 
     point_cloud = [None, None]
     features = [None, None]
@@ -98,7 +100,17 @@ def alignPointCloud(cargo_no):
             print "EOF Error at reading " + './../Save_Point_Cloud/{}/{}_pc_offset.npy'.format(i, str(cargo_no).zfill(3))
             return
 
-        point_cloud[i] = raw_point_cloud[0]
+        n = raw_point_cloud[0].shape[0]
+
+        if n>max_points:
+            point_ratio = round(max_points/n, 2)
+            idx = random.sample(range(n), int(n*point_ratio))
+            point_cloud[i] = raw_point_cloud[0][idx, :]
+        # print raw_point_cloud[0].shape
+        # print n
+        # print len(random.sample(range(n), int(n*point_ratio)))
+        else:
+            point_cloud[i] = raw_point_cloud[0]
 
         for j in range(1, graph_n[i]):
             point_cloud[i] = np.concatenate([point_cloud[i], raw_point_cloud[j]])
@@ -173,7 +185,7 @@ def alignPointCloud(cargo_no):
         for j in range(filtered_point_cloud.shape[0]):
             proj[j] = dot_prod(dir, filtered_point_cloud[j])
         proj_arg = np.argsort(proj)
-        filtered_point_cloud = filtered_point_cloud[proj_arg[int(filtered_point_cloud.shape[0] * 0.007) : int(filtered_point_cloud.shape[0] * 0.993)], :]
+        filtered_point_cloud = filtered_point_cloud[proj_arg[int(filtered_point_cloud.shape[0] * 0.004) : int(filtered_point_cloud.shape[0] * 0.996)], :]
 
     filtered_point_cloud = filtered_point_cloud - np.mean(filtered_point_cloud, axis = 0)
 

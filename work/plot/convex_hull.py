@@ -151,7 +151,7 @@ def ConstructConvexHull(points):
     np.random.shuffle(points)
 
     conv_points = convexHull2D(points)
-    print (points.shape)
+    # print (points.shape)
 
 
     if conv_points.shape[0] <= 500:
@@ -159,7 +159,7 @@ def ConstructConvexHull(points):
     else:
         np.random.shuffle(conv_points)
         points = conv_points[0:500, :]
-    points = points - np.mean(points, axis = 0)
+    points = points - np.mean(points, axis=0)
     flag = [True for i in range(points.shape[0])]
     facets = []
     facet_n = 0
