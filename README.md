@@ -1,15 +1,16 @@
 # Cargo-Volume-Estimation
 
 ## Description
-Capstone Design 
 
-Estimate Cargo Volume using Kinect under the environment of conveyor belt
+VE/VM 450 Capstone Design 
+
+Estimate Cargo Volume using Kinect under the environment of conveyor belt.
 
 ## Sponsor
 
 Panasonic
 
-## Environment Setting
+## Environment Setting & Run
 
 Refer to user manual.
 
@@ -24,7 +25,3 @@ Refer to user manual.
 - [x] 需要一个Python的高效实时显示点云的库 (mayavi)
 - [x] 3维凸包
 - [x] 长宽高判断
-
-## Run:
-
-Refer to user manual.
