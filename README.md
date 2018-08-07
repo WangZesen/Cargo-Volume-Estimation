@@ -14,6 +14,10 @@ Panasonic
 
 Refer to user manual.
 
+## Link for Expo video
+
+https://drive.google.com/open?id=1SnkOxXVOpzQqkwBFzGjMcaeACO7QfCCg
+
 ## Todo:
 - [x] 深度图降噪
 - [x] 根据深度图生成点云
