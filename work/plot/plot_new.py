@@ -230,7 +230,7 @@ class Visualization(HasTraits):
                 self.idx[0] -= 1
         # self.update_scene()
         self.log.update('Change to Cargo ' + str(self.idx[0]+1) + " (" + str(
-            self.idx[1]-1) + "). \nClick 'Refresh' to start plot\n")
+            self.idx[1]) + "). \nClick 'Refresh' to start plot\n")
         # self.update_scene_thread.updateOne()
         return
 
@@ -248,7 +248,7 @@ class Visualization(HasTraits):
                 self.idx[0] += 1
         # self.update_scene()
         self.log.update('Change to Cargo ' + str(self.idx[0]+1) + " (" + str(
-            self.idx[1] - 1) + "). \nClick 'Refresh' to start plot\n")
+            self.idx[1]) + "). \nClick 'Refresh' to start plot\n")
         # self.update_scene_thread.updateOne()
         return
 
